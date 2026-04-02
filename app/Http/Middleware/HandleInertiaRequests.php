@@ -31,8 +31,16 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            // Mis à jour à chaque visite Inertia : le front peut synchroniser <meta name="csrf-token"> pour éviter les 419.
+            'csrf_token' => csrf_token(),
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'warning' => $request->session()->get('warning'),
+                'info' => $request->session()->get('info'),
             ],
         ];
     }

@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Auth;
 
 class ResourceController extends Controller
 {
-    public function store(Request $request) 
+    public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:100',
             'link' => 'required|url',
-            'category' => 'required|string'
+            'category' => 'required|string',
+            'filiere' => 'nullable|string|max:120',
         ]);
 
         // On récupère l'utilisateur connecté de façon sécurisée
@@ -23,10 +24,11 @@ class ResourceController extends Controller
             'title' => $request->title,
             'link' => $request->link,
             'category' => $request->category,
+            'filiere' => $request->filled('filiere') ? $request->filiere : null,
             'user_id' => $user->id,
             'university_id' => $user->university_id,
         ]);
 
-        return back();
+        return back()->with('success', 'Ressource ajoutée avec succès !');
     }
 }

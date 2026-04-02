@@ -4,12 +4,10 @@ import { createContext, useContext, useState } from 'react';
 
 const DropDownContext = createContext();
 
+// ── Root ─────────────────────────────────────────────────────────────────
 const Dropdown = ({ children }) => {
     const [open, setOpen] = useState(false);
-
-    const toggleOpen = () => {
-        setOpen((previousState) => !previousState);
-    };
+    const toggleOpen = () => setOpen(v => !v);
 
     return (
         <DropDownContext.Provider value={{ open, setOpen, toggleOpen }}>
@@ -18,82 +16,82 @@ const Dropdown = ({ children }) => {
     );
 };
 
+// ── Trigger ───────────────────────────────────────────────────────────────
 const Trigger = ({ children }) => {
     const { open, setOpen, toggleOpen } = useContext(DropDownContext);
-
     return (
         <>
             <div onClick={toggleOpen}>{children}</div>
-
             {open && (
                 <div
                     className="fixed inset-0 z-40"
                     onClick={() => setOpen(false)}
-                ></div>
+                />
             )}
         </>
     );
 };
 
+// ── Content ───────────────────────────────────────────────────────────────
 const Content = ({
     align = 'right',
     width = '48',
-    contentClasses = 'py-1 bg-white',
+    contentClasses = 'py-1.5 bg-white',
     children,
 }) => {
     const { open, setOpen } = useContext(DropDownContext);
 
-    let alignmentClasses = 'origin-top';
+    const alignClass = {
+        left:   'ltr:origin-top-left rtl:origin-top-right start-0',
+        right:  'ltr:origin-top-right rtl:origin-top-left end-0',
+        center: 'origin-top left-1/2 -translate-x-1/2',
+    }[align] ?? 'ltr:origin-top-right end-0';
 
-    if (align === 'left') {
-        alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
-    } else if (align === 'right') {
-        alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
-    }
-
-    let widthClasses = '';
-
-    if (width === '48') {
-        widthClasses = 'w-48';
-    }
+    const widthClass = {
+        '40': 'w-40', '48': 'w-48', '52': 'w-52',
+        '56': 'w-56', '64': 'w-64',
+    }[width] ?? 'w-48';
 
     return (
-        <>
-            <Transition
-                show={open}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="transition ease-in duration-75"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
+        <Transition
+            show={open}
+            enter="transition ease-out duration-200"
+            enterFrom="opacity-0 scale-95 -translate-y-1"
+            enterTo="opacity-100 scale-100 translate-y-0"
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
+        >
+            <div
+                className={`absolute z-50 mt-2 ${alignClass} ${widthClass}`}
+                onClick={() => setOpen(false)}
             >
-                <div
-                    className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
-                    onClick={() => setOpen(false)}
-                >
-                    <div
-                        className={
-                            `rounded-md ring-1 ring-black ring-opacity-5 ` +
-                            contentClasses
-                        }
-                    >
-                        {children}
-                    </div>
+                <div className={[
+                    'rounded-2xl shadow-xl',
+                    'border border-gray-100',
+                    'ring-0 overflow-hidden',
+                    contentClasses,
+                ].join(' ')}>
+                    {children}
                 </div>
-            </Transition>
-        </>
+            </div>
+        </Transition>
     );
 };
 
+// ── Link ──────────────────────────────────────────────────────────────────
 const DropdownLink = ({ className = '', children, ...props }) => {
     return (
         <Link
             {...props}
-            className={
-                'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ' +
-                className
-            }
+            className={[
+                'flex items-center w-full px-4 py-2.5',
+                'text-sm font-medium text-slate-700 leading-5',
+                'hover:bg-slate-50 hover:text-slate-900',
+                'transition-colors duration-150',
+                'focus:bg-slate-50 focus:outline-none',
+                className,
+            ].join(' ')}
         >
             {children}
         </Link>
@@ -102,6 +100,6 @@ const DropdownLink = ({ className = '', children, ...props }) => {
 
 Dropdown.Trigger = Trigger;
 Dropdown.Content = Content;
-Dropdown.Link = DropdownLink;
+Dropdown.Link    = DropdownLink;
 
 export default Dropdown;

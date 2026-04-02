@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Resource extends Model
 {
-    protected $fillable = ['title', 'link', 'category', 'user_id', 'university_id'];
+    protected $fillable = ['title', 'link', 'category', 'filiere', 'user_id', 'university_id'];
 
-    public function user() { return $this->belongsTo(User::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
