@@ -1,0 +1,214 @@
+{
+  "headTitle": "UniConnect — L'Entraide Académique Éthique",
+  "hero": {
+    "badge": "Projet PIDR · SupMTI · Mars 2026",
+    "tagline": "L'Entraide Académique Éthique",
+    "subtitleBefore": "Le premier réseau social ",
+    "subtitleHighlight": "exclusif aux étudiants SupMTI",
+    "subtitleAfter": ". Conçu pour l'intelligence collective — sans manipulation, sans publicité, sans dépendance.",
+    "ctaJoin": "Rejoindre la communauté",
+    "ctaDiscover": "Découvrir le projet",
+    "scroll": "Scroll"
+  },
+  "stats": [
+    { "value": "500+", "label": "Étudiants SupMTI" },
+    { "value": "3", "label": "Piliers Éthiques" },
+    { "value": "0", "label": "Publicités" },
+    { "value": "100%", "label": "Open & Éthique" }
+  ],
+  "features": {
+    "sectionBadge": "Fonctionnalités",
+    "titleLine1": "Conçu pour",
+    "titleHighlight": "vous protéger",
+    "titleLine2": "autant que vous aider",
+    "subtitle": "Chaque feature a été réfléchie à travers le prisme du Triple Bottom Line : People, Planet, Profit."
+  },
+  "featureItems": [
+    {
+      "title": "Entraide Académique",
+      "desc": "Posez vos questions, partagez vos ressources et progressez ensemble. La communauté SupMTI au bout des doigts.",
+      "badge": "Social Learning"
+    },
+    {
+      "title": "Éthique & Sécurisé",
+      "desc": "Privacy by Design, chiffrement HTTPS et droit à l'oubli. Vos données restent les vôtres.",
+      "badge": "RGPD Compliant"
+    },
+    {
+      "title": "Intelligence Collective",
+      "desc": "Pas d'algorithme addictif. Un flux classé par pertinence académique, pas par engagement maximal.",
+      "badge": "Anti-Dopamine Loop"
+    },
+    {
+      "title": "Éco-Conçu",
+      "desc": "Optimisé pour les connexions faibles et les vieux appareils. La technologie au service de tous.",
+      "badge": "Low-Tech Friendly"
+    },
+    {
+      "title": "Droit à la Déconnexion",
+      "desc": "Mode Focus et mise en sommeil automatique des notifs après les cours. Votre sommeil compte.",
+      "badge": "Bien-être Mental"
+    },
+    {
+      "title": "Accès Exclusif",
+      "desc": "Réservé aux étudiant·e·s SupMTI via email institutionnel. Une communauté de confiance.",
+      "badge": "Vérification @supmti.ma"
+    }
+  ],
+  "ticker": [
+    "Privacy by Design",
+    "Droit à l'Oubli",
+    "Éco-Conçu",
+    "Zéro Publicité",
+    "Anti-Manipulation",
+    "Algorithme Transparent",
+    "Exclusif SupMTI",
+    "Open Source"
+  ],
+  "ethics": {
+    "sectionBadge": "L'ADN du Projet PIDR",
+    "title": "Les 3 Piliers ",
+    "titleHighlight": "Éthiques",
+    "subtitle": "UniConnect n'est pas une app. C'est une démonstration que l'ingénierie peut être humaine.",
+    "quote": "La technologie est l'outil,",
+    "quoteHighlight": "l'humanité est la finalité.",
+    "quoteAuthor": "— Wiam El Arroussi, Projet PIDR 2026",
+    "pillars": [
+      {
+        "emoji": "🤝",
+        "title": "People",
+        "subtitle": "Social",
+        "points": [
+          "Briser l'isolement académique",
+          "Communication prof-étudiant fluide",
+          "Protection anti-harcèlement IA",
+          "Accessibilité universelle (malvoyants, TDAH)"
+        ]
+      },
+      {
+        "emoji": "🌿",
+        "title": "Planet",
+        "subtitle": "Environnement",
+        "points": [
+          "Éco-conception logicielle",
+          "Charge serveur minimisée",
+          "Optimisé Low-Tech & vieux appareils",
+          "Consommation énergétique réduite"
+        ]
+      },
+      {
+        "emoji": "📈",
+        "title": "Profit",
+        "subtitle": "Économique",
+        "points": [
+          "Hausse du taux de réussite SupMTI",
+          "Meilleure rétention des étudiants",
+          "Coût serveur mutualisé nul",
+          "Modèle sans publicité viable"
+        ]
+      }
+    ]
+  },
+  "methodology": {
+    "sectionBadge": "Méthodologie PIDR",
+    "title": "De l'idée au",
+    "titleHighlight": "MVP"
+  },
+  "steps": [
+    {
+      "step": "01",
+      "title": "Cadrage",
+      "desc": "Identification du besoin réel d'entraide à SupMTI via interviews étudiantes.",
+      "side": "left"
+    },
+    {
+      "step": "02",
+      "title": "Recherche",
+      "desc": "Étude bibliographique IEEE & Google Scholar sur le Social Learning et la Tech Éthique.",
+      "side": "right"
+    },
+    {
+      "step": "03",
+      "title": "Faisabilité",
+      "desc": "Analyse des coûts serveur, risques éthiques et cadre légal RGPD / loi marocaine.",
+      "side": "left"
+    },
+    {
+      "step": "04",
+      "title": "Prototypage",
+      "desc": "Création du MVP avec React (Front), Laravel (Back), SQL Server (BDD).",
+      "side": "right"
+    },
+    {
+      "step": "05",
+      "title": "Tests",
+      "desc": "Tests utilisateurs avec un panel d'étudiants et enseignants SupMTI.",
+      "side": "left"
+    },
+    {
+      "step": "06",
+      "title": "Soutenance",
+      "desc": "Rapport final PIDR et présentation devant le jury académique.",
+      "side": "right"
+    }
+  ],
+  "testimonials": {
+    "sectionBadge": "Communauté",
+    "titleLine1": "Ce qu'en pensent",
+    "titleHighlight": "les étudiants",
+    "titleLine2": "",
+    "ariaDot": "Témoignage {{n}}",
+    "items": [
+      {
+        "name": "Yasmine B.",
+        "role": "Génie Informatique · 3A",
+        "text": "L'interface est d'une fluidité incroyable. J'ai pu trouver un binôme pour mon projet Oracle en quelques minutes grâce au flux par pertinence.",
+        "avatar": "YB"
+      },
+      {
+        "name": "Omar E.",
+        "role": "Génie Civil · 1A",
+        "text": "Le Mode Focus est une révolution pour mes révisions. Savoir que les notifications s'arrêtent pour respecter mon sommeil change tout.",
+        "avatar": "OE"
+      },
+      {
+        "name": "Salma R.",
+        "role": "Management Industriel · 2A",
+        "text": "Enfin un espace sécurisé où l'on n'est pas bombardé de publicités. La transparence sur l'utilisation de nos données me rassure énormément.",
+        "avatar": "SR"
+      },
+      {
+        "name": "Mehdi A.",
+        "role": "Systèmes Embarqués · 3A",
+        "text": "La section ressources est une mine d'or. J'y ai trouvé des traces d'exécution sur les algorithmes de routage qui m'ont sauvé pour mes exams.",
+        "avatar": "MA"
+      },
+      {
+        "name": "Anas K.",
+        "role": "Génie Logiciel · 2A",
+        "text": "Le concept de Justice Algorithmique est génial. On sent que la plateforme est conçue pour notre bien-être, pas pour nous rendre accros.",
+        "avatar": "AK"
+      },
+      {
+        "name": "Houda T.",
+        "role": "Réseaux & Télécoms · 1A",
+        "text": "L'inscription via l'email SupMTI garantit une communauté de confiance. C'est propre, efficace et vraiment utile au quotidien.",
+        "avatar": "HT"
+      }
+    ]
+  },
+  "cta": {
+    "badge": "Accès exclusif @supmti.ma",
+    "title": "Prêt·e à rejoindre",
+    "titleLine2": "la communauté ?",
+    "subtitle": "Inscrivez-vous avec votre email institutionnel et commencez à apprendre ensemble, dès aujourd'hui.",
+    "createAccount": "Créer mon compte",
+    "alreadyMember": "Déjà membre ? Connexion",
+    "footerLine": "Aucune donnée vendue · Zéro publicité · Droit à l'oubli garanti"
+  },
+  "footer": {
+    "credit": "Projet PIDR · SupMTI · Mars 2026 ·",
+    "engineered": "Engineered by Wiam & Rim",
+    "tagline": "Zéro publicité · 100% éthique"
+  }
+}

@@ -1,8 +1,11 @@
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function GuestLayout({ children }) {
+    const { t } = useTranslation();
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
@@ -13,6 +16,9 @@ export default function GuestLayout({ children }) {
 
     return (
         <div className="relative min-h-screen bg-slate-50 flex items-center justify-center px-4 overflow-hidden">
+            <div className="absolute top-4 end-4 z-20">
+                <LanguageSwitcher variant="compact" />
+            </div>
 
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -150,7 +156,7 @@ export default function GuestLayout({ children }) {
                     </Link>
                     <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                        Réseau académique éthique · SupMTI
+                        {t('guest.tagline')}
                     </p>
                 </div>
 
@@ -171,7 +177,7 @@ export default function GuestLayout({ children }) {
                 <p className="card-appear text-center text-[10px] text-slate-400 mt-6 flex items-center justify-center gap-2"
                    style={{ animationDelay: '0.2s' }}>
                     <span className="w-6 h-px bg-slate-200" />
-                    Projet PIDR · Engineered by Wiam &amp; Rim · 2026
+                    {t('guest.footer')}
                     <span className="w-6 h-px bg-slate-200" />
                 </p>
             </div>

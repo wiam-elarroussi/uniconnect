@@ -1,7 +1,9 @@
 import '../css/app.css';
 import './bootstrap';
 
+import i18n from '@/i18n/config';
 import GlobalFlashToasts from '@/Components/GlobalFlashToasts';
+import { I18nextProvider } from 'react-i18next';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
@@ -23,6 +25,21 @@ function syncCsrfMetaFromPage(page) {
 // Session / jeton CSRF : après chaque navigation Inertia, aligner le meta (axios, libs tierces).
 document.addEventListener('inertia:success', (event) => {
     syncCsrfMetaFromPage(event.detail?.page);
+    const page = event.detail?.page;
+    const loc = page?.props?.locale;
+    const dir = page?.props?.localeDir;
+    if (loc) {
+        void i18n.changeLanguage(loc);
+        document.documentElement.setAttribute('lang', loc);
+    }
+    if (dir) {
+        document.documentElement.setAttribute('dir', dir);
+    }
+    if (loc === 'ar') {
+        document.body?.classList.add('font-arabic');
+    } else {
+        document.body?.classList.remove('font-arabic');
+    }
 });
 
 function firstMessageFromLaravelValidation(data) {
@@ -59,9 +76,9 @@ document.addEventListener('inertia:invalid', (event) => {
 
     const msg =
         firstMessageFromLaravelValidation(raw)
-        || (status === 422 ? 'Vérifiez les champs du formulaire.' : null)
-        || (status === 429 ? 'Trop de tentatives. Patientez un instant.' : null)
-        || 'Une erreur est survenue. Réessayez.';
+        || (status === 422 ? i18n.t('errors.checkForm') : null)
+        || (status === 429 ? i18n.t('errors.tooManyAttempts') : null)
+        || i18n.t('errors.generic');
 
     toast.error(msg, { duration: 6000 });
 });
@@ -87,10 +104,22 @@ createInertiaApp({
         };
     },
     setup({ el, App, props }) {
+        const initial = props.initialPage?.props;
+        if (initial?.locale) {
+            void i18n.changeLanguage(initial.locale);
+            document.documentElement.setAttribute('lang', initial.locale);
+        }
+        if (initial?.localeDir) {
+            document.documentElement.setAttribute('dir', initial.localeDir);
+        }
+        if (initial?.locale === 'ar') {
+            document.body?.classList.add('font-arabic');
+        }
+
         const root = createRoot(el);
 
         root.render(
-            <>
+            <I18nextProvider i18n={i18n}>
                 <App {...props} />
                 <Toaster
                     position="top-right"
@@ -99,7 +128,7 @@ createInertiaApp({
                         style: { fontSize: '14px' },
                     }}
                 />
-            </>,
+            </I18nextProvider>,
         );
     },
     progress: {

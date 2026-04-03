@@ -12,94 +12,14 @@ export const IconZap     = () => (<svg className="w-5 h-5" fill="none" stroke="c
 export const IconLock    = () => (<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>);
 export const IconBell    = () => (<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path strokeLinecap="round" strokeLinejoin="round" d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>);
 
-// ── Données ─────────────────────────────────────────────────────────────────
-export const FEATURES = [
-  {
-    icon: <IconUsers />,
-    color: 'blue',
-    title: 'Entraide Académique',
-    desc: "Posez vos questions, partagez vos ressources et progressez ensemble. La communauté SupMTI au bout des doigts.",
-    badge: 'Social Learning',
-  },
-  {
-    icon: <IconShield />,
-    color: 'emerald',
-    title: 'Éthique & Sécurisé',
-    desc: "Privacy by Design, chiffrement HTTPS et droit à l'oubli. Vos données restent les vôtres.",
-    badge: 'RGPD Compliant',
-  },
-  {
-    icon: <IconBrain />,
-    color: 'indigo',
-    title: 'Intelligence Collective',
-    desc: "Pas d'algorithme addictif. Un flux classé par pertinence académique, pas par engagement maximal.",
-    badge: 'Anti-Dopamine Loop',
-  },
-  {
-    icon: <IconLeaf />,
-    color: 'emerald',
-    title: 'Éco-Conçu',
-    desc: "Optimisé pour les connexions faibles et les vieux appareils. La technologie au service de tous.",
-    badge: 'Low-Tech Friendly',
-  },
-  {
-    icon: <IconBell />,
-    color: 'blue',
-    title: 'Droit à la Déconnexion',
-    desc: "Mode Focus et mise en sommeil automatique des notifs après les cours. Votre sommeil compte.",
-    badge: 'Bien-être Mental',
-  },
-  {
-    icon: <IconLock />,
-    color: 'indigo',
-    title: 'Accès Exclusif',
-    desc: "Réservé aux étudiant·e·s SupMTI via email institutionnel. Une communauté de confiance.",
-    badge: 'Vérification @supmti.ma',
-  },
+/** Layout only (icons + colors) — copy matches welcomePage.featureItems order */
+export const FEATURE_LAYOUT = [
+  { icon: <IconUsers />, color: 'blue' },
+  { icon: <IconShield />, color: 'emerald' },
+  { icon: <IconBrain />, color: 'indigo' },
+  { icon: <IconLeaf />, color: 'emerald' },
+  { icon: <IconBell />, color: 'blue' },
+  { icon: <IconLock />, color: 'indigo' },
 ];
 
-export const STATS = [
-  { value: '500+', label: 'Étudiants SupMTI' },
-  { value: '3',    label: 'Piliers Éthiques' },
-  { value: '0',    label: 'Publicités' },
-  { value: '100%', label: 'Open & Éthique' },
-];
-
-export const TESTIMONIALS = [
-  { name: 'Yasmine B.',  role: 'Génie Informatique · 3A',    text: "L'interface est d'une fluidité incroyable. J'ai pu trouver un binôme pour mon projet Oracle en quelques minutes grâce au flux par pertinence.", avatar: 'YB' },
-  { name: 'Omar E.',     role: 'Génie Civil · 1A',           text: "Le Mode Focus est une révolution pour mes révisions. Savoir que les notifications s'arrêtent pour respecter mon sommeil change tout.", avatar: 'OE' },
-  { name: 'Salma R.',    role: 'Management Industriel · 2A', text: "Enfin un espace sécurisé où l'on n'est pas bombardé de publicités. La transparence sur l'utilisation de nos données me rassure énormément.", avatar: 'SR' },
-  { name: 'Mehdi A.',    role: 'Systèmes Embarqués · 3A',    text: "La section ressources est une mine d'or. J'y ai trouvé des traces d'exécution sur les algorithmes de routage qui m'ont sauvé pour mes exams.", avatar: 'MA' },
-  { name: 'Anas K.',     role: 'Génie Logiciel · 2A',        text: "Le concept de Justice Algorithmique est génial. On sent que la plateforme est conçue pour notre bien-être, pas pour nous rendre accros.", avatar: 'AK' },
-  { name: 'Houda T.',    role: 'Réseaux & Télécoms · 1A',    text: "L'inscription via l'email SupMTI garantit une communauté de confiance. C'est propre, efficace et vraiment utile au quotidien.", avatar: 'HT' },
-];
-
-export const PILIERS = [
-  {
-    emoji: '🤝', title: 'People', subtitle: 'Social', color: '#2563EB',
-    points: ["Briser l'isolement académique", "Communication prof-étudiant fluide", "Protection anti-harcèlement IA", "Accessibilité universelle (malvoyants, TDAH)"],
-  },
-  {
-    emoji: '🌿', title: 'Planet', subtitle: 'Environnement', color: '#10B981',
-    points: ["Éco-conception logicielle", "Charge serveur minimisée", "Optimisé Low-Tech & vieux appareils", "Consommation énergétique réduite"],
-  },
-  {
-    emoji: '📈', title: 'Profit', subtitle: 'Économique', color: '#4F46E5',
-    points: ["Hausse du taux de réussite SupMTI", "Meilleure rétention des étudiants", "Coût serveur mutualisé nul", "Modèle sans publicité viable"],
-  },
-];
-
-export const ETAPES = [
-  { step: '01', title: 'Cadrage',      desc: "Identification du besoin réel d'entraide à SupMTI via interviews étudiantes.",                            side: 'left' },
-  { step: '02', title: 'Recherche',    desc: "Étude bibliographique IEEE & Google Scholar sur le Social Learning et la Tech Éthique.",                  side: 'right' },
-  { step: '03', title: 'Faisabilité',  desc: "Analyse des coûts serveur, risques éthiques et cadre légal RGPD / loi marocaine.",                       side: 'left' },
-  { step: '04', title: 'Prototypage',  desc: "Création du MVP avec React (Front), Laravel (Back), SQL Server (BDD).",                                   side: 'right' },
-  { step: '05', title: 'Tests',        desc: "Tests utilisateurs avec un panel d'étudiants et enseignants SupMTI.",                                      side: 'left' },
-  { step: '06', title: 'Soutenance',   desc: "Rapport final PIDR et présentation devant le jury académique.",                                            side: 'right' },
-];
-
-export const TICKER_TAGS = [
-  "Privacy by Design", "Droit à l'Oubli", "Éco-Conçu",
-  "Zéro Publicité", "Anti-Manipulation", "Algorithme Transparent",
-  "Exclusif SupMTI", "Open Source",
-];
+export const PILIER_COLORS = ['#2563EB', '#10B981', '#4F46E5'];

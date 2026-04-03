@@ -1,7 +1,8 @@
 // resources/js/Pages/Dashboard.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DASH_CSS } from '@/Components/Dashboard/dashStyles';
 import { Ic } from '@/Components/Dashboard/Icons';
 import Avatar from '@/Components/Dashboard/Avatar';
@@ -153,6 +154,10 @@ export default function Dashboard({
   channels = [],
   myPostsCount = 0,
 }) {
+  const { t, i18n } = useTranslation();
+  const dateLocale =
+    i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR';
+
   const [moodId, setMoodId] = useState(() => {
     if (typeof window === 'undefined') return 'dark';
     return window.localStorage.getItem(MOOD_STORAGE_KEY) || 'dark';
@@ -185,7 +190,7 @@ export default function Dashboard({
 
   const hour        = new Date().getHours();
   const isFocus     = hour >= 22 || hour < 7;
-  const firstName   = auth.user.name.split(' ')[0];
+  const firstName   = String(auth?.user?.name ?? '').trim().split(/\s+/).filter(Boolean)[0] ?? '';
   const { processing, reset, errors } = useForm({ body: '' });
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
@@ -226,13 +231,29 @@ export default function Dashboard({
     setStoryViewerOpen(true);
   };
 
-  const greeting = (() => {
-    if (hour < 5)  return { text: 'Bonne nuit',    emoji: '🌙', sub: 'Le réseau dort. Vous devriez aussi.' };
-    if (hour < 12) return { text: 'Bonjour',        emoji: '⚡', sub: 'Nouvelle session. Nouveaux apprentissages.' };
-    if (hour < 18) return { text: 'Bon après-midi', emoji: '🔮', sub: 'Le flux académique est en direct.' };
-    if (hour < 22) return { text: 'Bonsoir',         emoji: '🌆', sub: `${posts.length} publication${posts.length!==1?'s':''} dans la communauté.` };
-    return               { text: 'Bonne nuit',    emoji: '🌙', sub: 'Mode Focus activé. Repos cognitif en cours.' };
-  })();
+  const greeting = useMemo(() => {
+    if (hour < 5) {
+      return { text: t('dashboard.greeting.night'), emoji: '🌙', sub: t('dashboard.greeting.night_sub') };
+    }
+    if (hour < 12) {
+      return { text: t('dashboard.greeting.morning'), emoji: '⚡', sub: t('dashboard.greeting.morning_sub') };
+    }
+    if (hour < 18) {
+      return { text: t('dashboard.greeting.afternoon'), emoji: '🔮', sub: t('dashboard.greeting.afternoon_sub') };
+    }
+    if (hour < 22) {
+      return {
+        text: t('dashboard.greeting.evening'),
+        emoji: '🌆',
+        sub: t('dashboard.greeting.evening_sub', { count: posts.length }),
+      };
+    }
+    return {
+      text: t('dashboard.greeting.night'),
+      emoji: '🌙',
+      sub: t('dashboard.greeting.focus_night_sub'),
+    };
+  }, [hour, posts.length, t, i18n.language]);
 
   const handleSubmit = (body, media, channelId, onSuccess) => {
     const data = { body, media };
@@ -266,8 +287,7 @@ export default function Dashboard({
   };
 
   const handleDelete = (id) => {
-    if (confirm('Supprimer ce message définitivement ?'))
-      router.delete(route('posts.destroy', id));
+    if (confirm(t('dashboard.confirmDeletePost'))) router.delete(route('posts.destroy', id));
   };
 
   const hasFeed = posts.length > 0;
@@ -285,24 +305,24 @@ export default function Dashboard({
       header={
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium" style={{color:'var(--text-3)'}}>Réseau</span>
+            <span className="text-sm font-medium" style={{color:'var(--text-3)'}}>{t('dashboard.network')}</span>
             <span style={{color:'var(--text-3)'}}>·</span>
             <span className="font-display font-bold text-sm" style={{color:'var(--text-1)'}}>{university}</span>
           </div>
           {isFocus && (
             <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
                   style={{background:'rgba(246,173,85,0.1)',color:'#f6ad55',border:'1px solid rgba(246,173,85,0.2)'}}>
-              <Ic.Moon /> Mode Focus Actif
+              <Ic.Moon /> {t('dashboard.focusActive')}
             </span>
           )}
         </div>
       }
     >
-      <Head title={`Fil · ${university}`} />
+      <Head title={t('dashboard.pageTitle', { university })} />
       <style>{DASH_CSS}</style>
 
       <div
-        className="dash-root py-6 px-4 sm:px-6 lg:px-8"
+        className="dash-root py-4 sm:py-6 px-3 sm:px-6 lg:px-8 min-w-0 overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
         style={{
           background: 'var(--bg-ambient)',
           '--bg-deep': preset.bgDeep,
@@ -334,7 +354,7 @@ export default function Dashboard({
                   className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-white/5"
                   onClick={() => setNotificationsOpen((v) => !v)}
                   style={{ color: 'var(--text-3)', border: '1px solid var(--border)' }}
-                  aria-label="Notifications"
+                  aria-label={t('dashboard.notifications')}
                 >
                   <Ic.Bell />
                 </button>
@@ -372,7 +392,7 @@ export default function Dashboard({
                     className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-white/5"
                     onClick={() => setNotificationsOpen((v) => !v)}
                     style={{ color: 'var(--text-3)', border: '1px solid var(--border)' }}
-                    aria-label="Notifications"
+                    aria-label={t('dashboard.notifications')}
                   >
                     <Ic.Bell />
                   </button>
@@ -388,7 +408,7 @@ export default function Dashboard({
               </div>
               <div className="flex items-center gap-2">
                 <span className="hidden sm:block text-[10px] font-bold uppercase tracking-wider" style={{color:'var(--text-3)'}}>
-                  Mood
+                  {t('dashboard.mood')}
                 </span>
                 <select
                   value={moodId}
@@ -401,20 +421,20 @@ export default function Dashboard({
                     colorScheme: moodId === 'light' ? 'light' : 'dark',
                     minWidth: '120px',
                   }}
-                  aria-label="Choisir le mood Dark / Light"
+                  aria-label={t('dashboard.moodAria')}
                 >
                   <option value="dark" style={{ backgroundColor: optionBg, color: optionColor }}>
-                    Dark
+                    {t('dashboard.dark')}
                   </option>
                   <option value="light" style={{ backgroundColor: optionBg, color: optionColor }}>
-                    Light
+                    {t('dashboard.light')}
                   </option>
                 </select>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="hidden sm:block text-[10px] font-bold uppercase tracking-wider" style={{color:'var(--text-3)'}}>
-                  Fond
+                  {t('dashboard.background')}
                 </span>
                 <select
                   value={bgId}
@@ -427,7 +447,7 @@ export default function Dashboard({
                     colorScheme: moodId === 'light' ? 'light' : 'dark',
                     minWidth: '140px',
                   }}
-                  aria-label="Choisir le fond du dashboard"
+                  aria-label={t('dashboard.backgroundAria')}
                 >
                   {Object.entries(bgPresets).map(([id, p]) => (
                     <option key={id} value={id} style={{ backgroundColor: optionBg, color: optionColor }}>
@@ -452,7 +472,7 @@ export default function Dashboard({
                   color: feedMode === 'all' ? 'var(--accent-1)' : 'var(--text-3)',
                 }}
               >
-                Tout le campus
+                {t('dashboard.feedAllCampus')}
               </button>
               <button
                 type="button"
@@ -463,7 +483,7 @@ export default function Dashboard({
                   color: feedMode === 'following' ? 'var(--accent-1)' : 'var(--text-3)',
                 }}
               >
-                Abonnements
+                {t('dashboard.feedFollowing')}
               </button>
             </div>
             <div className="inline-flex rounded-xl p-0.5" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)' }}>
@@ -476,7 +496,7 @@ export default function Dashboard({
                   color: channelFeed === 'all' ? 'var(--accent-2)' : 'var(--text-3)',
                 }}
               >
-                Tous les canaux
+                {t('dashboard.channelsAll')}
               </button>
               <button
                 type="button"
@@ -487,7 +507,7 @@ export default function Dashboard({
                   color: channelFeed === 'followed' ? 'var(--accent-2)' : 'var(--text-3)',
                 }}
               >
-                Canaux suivis
+                {t('dashboard.channelsFollowed')}
               </button>
             </div>
             <a
@@ -495,7 +515,7 @@ export default function Dashboard({
               className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
               style={{ color: 'var(--accent-1)', border: '1px solid rgba(99,179,237,0.25)' }}
             >
-              Gérer mes canaux →
+              {t('dashboard.manageChannels')}
             </a>
           </div>
           )}
@@ -504,7 +524,7 @@ export default function Dashboard({
             <div className="glass-card rounded-2xl p-4 mb-4">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <p className="text-xs font-bold" style={{ color: 'var(--text-2)' }}>
-                  Notifications non lues
+                  {t('dashboard.notificationsUnread')}
                 </p>
                 <div className="flex gap-2">
                   {notifications.length > 0 && (
@@ -514,7 +534,7 @@ export default function Dashboard({
                       className="text-[10px] font-bold px-2 py-1 rounded-lg"
                       style={{ color: 'var(--accent-1)', border: '1px solid rgba(99,179,237,0.35)' }}
                     >
-                      Tout marquer comme lu
+                      {t('dashboard.markAllRead')}
                     </button>
                   )}
                   <button
@@ -522,13 +542,13 @@ export default function Dashboard({
                     onClick={() => setNotificationsOpen(false)}
                     className="text-[10px] text-slate-500"
                   >
-                    Fermer
+                    {t('dashboard.close')}
                   </button>
                 </div>
               </div>
               {notifications.length === 0 ? (
                 <p className="text-xs" style={{ color: 'var(--text-3)' }}>
-                  Aucune nouvelle notification.
+                  {t('dashboard.noNotifications')}
                 </p>
               ) : (
                 <ul className="space-y-3">
@@ -538,7 +558,7 @@ export default function Dashboard({
                       {n.body && <p className="mt-0.5">{n.body}</p>}
                       <p className="mt-1 text-[10px]" style={{ color: 'var(--text-3)' }}>
                         {n.created_at
-                          ? new Date(n.created_at).toLocaleString('fr-FR', {
+                          ? new Date(n.created_at).toLocaleString(dateLocale, {
                               day: 'numeric',
                               month: 'short',
                               hour: '2-digit',
@@ -566,9 +586,9 @@ export default function Dashboard({
 
               {!panels.stories && !panels.feed && !panels.sidebar && (
                 <div className="glass-card rounded-2xl p-8 text-center mb-4" style={{ color: 'var(--text-3)' }}>
-                  <p className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>Vue épurée</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>{t('dashboard.cleanView')}</p>
                   <p className="text-xs mt-2 max-w-md mx-auto">
-                    Utilisez la barre d’icônes ci-dessus pour afficher les stories, le fil, les filtres ou le panneau latéral.
+                    {t('dashboard.cleanViewHint')}
                   </p>
                 </div>
               )}
@@ -587,10 +607,10 @@ export default function Dashboard({
                     <Ic.Spark />
                   </div>
                   <h3 className="font-display font-bold mb-2" style={{color:'var(--text-1)'}}>
-                    Réseau silencieux
+                    {t('dashboard.emptyFeedTitle')}
                   </h3>
                   <p className="text-sm" style={{color:'var(--text-3)'}}>
-                    Soyez le premier à publier dans {university}.
+                    {t('dashboard.emptyFeedBody', { university })}
                   </p>
                 </div>
               ) : (
@@ -610,15 +630,15 @@ export default function Dashboard({
             {panels.sidebar && (
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-4">
-                <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-2)' }}>Navigation</p>
+                <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-2)' }}>{t('dashboard.navigation')}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <a href={route('my-posts.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Mes posts</a>
-                  <a href={route('dashboard')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Fil</a>
-                  <a href={route('channels.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Canaux</a>
-                  <a href={route('messages.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Messages</a>
-                  <a href={route('saved-posts.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Posts sauvegardés</a>
-                  <a href={route('dashboard')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Bibliothèque</a>
-                  <a href={route('stories.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>Stories</a>
+                  <a href={route('my-posts.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarMyPosts')}</a>
+                  <a href={route('dashboard')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarFeed')}</a>
+                  <a href={route('channels.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarChannels')}</a>
+                  <a href={route('messages.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarMessages')}</a>
+                  <a href={route('saved-posts.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarSaved')}</a>
+                  <a href={route('dashboard')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarLibrary')}</a>
+                  <a href={route('stories.index')} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--bg-glass)', color: 'var(--text-3)' }}>{t('dashboard.sidebarStories')}</a>
                 </div>
               </div>
               {[

@@ -1,35 +1,39 @@
 // resources/js/Components/Dashboard/PostCard.jsx
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, router } from '@inertiajs/react';
 import Avatar from './Avatar';
 import EmojiPicker from './EmojiPicker';
 import { Ic } from './Icons';
 
-const TAG_MAP = {
-  question:  { label:'💡 Question',  cls:'tag-question' },
-  ressource: { label:'📎 Ressource', cls:'tag-resource' },
-  projet:    { label:'🎯 Projet',    cls:'tag-project' },
-};
-
-function detectTag(text) {
+function detectTag(text, tagMap) {
   if (!text) return null;
-  const t = text.toLowerCase();
-  if (t.includes('question') || text.startsWith('💡')) return TAG_MAP.question;
-  if (t.includes('ressource') || text.startsWith('📎')) return TAG_MAP.ressource;
-  if (t.includes('projet')    || text.startsWith('🎯')) return TAG_MAP.projet;
+  const low = text.toLowerCase();
+  if (low.includes('question') || low.includes('سؤال') || text.startsWith('💡')) return tagMap.question;
+  if (low.includes('ressource') || low.includes('resource') || low.includes('مورد') || text.startsWith('📎')) return tagMap.ressource;
+  if (low.includes('projet') || low.includes('project') || low.includes('مشروع') || text.startsWith('🎯')) return tagMap.projet;
   return null;
 }
 
-function timeAgo(date) {
-  const m = Math.floor((Date.now() - new Date(date)) / 60000);
-  if (m < 1)   return "À l'instant";
-  if (m < 60)  return `${m}m`;
-  const h = Math.floor(m/60);
-  if (h < 24)  return `${h}h`;
-  return new Date(date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-}
-
 export default function PostCard({ p, auth, university, onDelete }) {
+  const { t, i18n } = useTranslation();
+  const tagMap = useMemo(() => ({
+    question:  { label: t('dashboard.postCard.tagQuestion'),  cls: 'tag-question' },
+    ressource: { label: t('dashboard.postCard.tagResource'), cls: 'tag-resource' },
+    projet:    { label: t('dashboard.postCard.tagProject'),    cls: 'tag-project' },
+  }), [t]);
+
+  const timeAgo = (date) => {
+    const m = Math.floor((Date.now() - new Date(date)) / 60000);
+    if (m < 1) return t('dashboard.postCard.justNow');
+    if (m < 60) return t('dashboard.postCard.minShort', { n: m });
+    const h = Math.floor(m / 60);
+    if (h < 24) return t('dashboard.postCard.hourShort', { n: h });
+    const locale = i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR';
+    return new Date(date).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  };
+
+  const numLocale = i18n.language === 'ar' ? 'ar-MA' : i18n.language === 'en' ? 'en-US' : 'fr-FR';
   const [showMenu, setMenu]   = useState(false);
   const [showCmts, setCmts]   = useState(false);
   const [cmtText, setCT]      = useState('');
@@ -42,7 +46,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
   const [likersOpen, setLikersOpen] = useState(false);
   const isOwn = p.user_id === auth.user.id;
   const likersPreview = p.likers_preview ?? [];
-  const tag   = detectTag(p.body);
+  const tag   = detectTag(p.body, tagMap);
 
   const comments = p.comments ?? [];
   const shareUrl = `${window.location.origin}${window.location.pathname}#post-${p.id}`;
@@ -88,7 +92,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'UniConnect', url: shareUrl });
+        await navigator.share({ title: t('dashboard.postCard.shareTitle'), url: shareUrl });
       } else {
         // Desktop fallback: open our share menu
         setShareOpen(v => !v);
@@ -105,7 +109,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
         setShareToast(true);
         setTimeout(() => setShareToast(false), 1200);
       } else {
-        prompt('Copiez ce lien :', shareUrl);
+        prompt(t('dashboard.postCard.promptCopy'), shareUrl);
       }
     } finally {
       setShareOpen(false);
@@ -121,7 +125,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href={route('users.show', p.user_id)} className="shrink-0" aria-label={`Profil de ${p.user?.name ?? ''}`}>
+          <Link href={route('users.show', p.user_id)} className="shrink-0" aria-label={t('dashboard.postCard.profileAria', { name: p.user?.name ?? '' })}>
             <Avatar
               name={p.user?.name}
               size="md"
@@ -146,7 +150,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
               {isOwn && (
                 <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
                       style={{background:'rgba(99,179,237,0.1)',color:'var(--accent-1)',border:'1px solid rgba(99,179,237,0.2)'}}>
-                  Vous
+                  {t('dashboard.postCard.you')}
                 </span>
               )}
               {/* Verified dot */}
@@ -175,13 +179,13 @@ export default function PostCard({ p, auth, university, onDelete }) {
                 <button onClick={() => { setMenu(false); onDelete(p.id); }}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
                   style={{color:'#fc8181'}}>
-                  <Ic.Trash /> Supprimer
+                  <Ic.Trash /> {t('dashboard.postCard.delete')}
                 </button>
               )}
               <button onClick={() => { setMenu(false); handleSave(); }}
                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
                 style={{color:'var(--text-1)'}}>
-                {saved ? <Ic.BookOn /> : <Ic.BookOff />} {saved ? 'Retirer' : 'Sauvegarder'}
+                {saved ? <Ic.BookOn /> : <Ic.BookOff />} {saved ? t('dashboard.postCard.unsave') : t('dashboard.postCard.save')}
               </button>
               <button onClick={() => { setMenu(false); handleShare(); }}
                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
@@ -211,7 +215,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
               <source src={p.media_url} />
             </video>
           ) : (
-            <img src={p.media_url} alt="Média publication" className="w-full object-cover rounded-2xl border" style={{ borderColor: 'var(--border)', maxHeight: 'min(85vh, 720px)' }} />
+            <img src={p.media_url} alt={t('dashboard.postCard.mediaAlt')} className="w-full object-cover rounded-2xl border" style={{ borderColor: 'var(--border)', maxHeight: 'min(85vh, 720px)' }} />
           )
         )}
       </div>
@@ -228,7 +232,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all ${likeAnim ? 'd-pop' : ''} ${liked ? 'text-red-400' : ''}`}
               style={liked ? {color:'#fc8181',background:'rgba(252,129,129,0.1)'} : {color:'var(--text-3)'}}>
               {liked ? <Ic.HeartOn /> : <Ic.HeartOff />}
-              <span className="text-xs font-medium">{likes.toLocaleString('fr-FR')}</span>
+              <span className="text-xs font-medium">{likes.toLocaleString(numLocale)}</span>
             </button>
 
             {/* Comment */}
@@ -259,7 +263,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
           <div className="flex -space-x-1.5">
             {likersPreview.length === 0 ? (
               <span className="text-[10px]" style={{ color: 'var(--text-3)' }}>
-                {likes === 0 ? "Pas encore de j'aime" : ''}
+                {likes === 0 ? t('dashboard.postCard.noLikesYet') : ''}
               </span>
             ) : (
               likersPreview.slice(0, 5).map((u) => (
@@ -283,9 +287,9 @@ export default function PostCard({ p, auth, university, onDelete }) {
               style={{ color: 'var(--text-3)' }}
             >
               <span style={{ color: 'var(--text-2)' }} className="font-medium">
-                {likes.toLocaleString('fr-FR')} j&apos;aime
+                {t('dashboard.postCard.likesCount', { n: likes.toLocaleString(numLocale) })}
               </span>
-              {likersPreview.length < likes ? ' · voir la liste' : ''}
+              {likersPreview.length < likes ? t('dashboard.postCard.seeList') : ''}
             </button>
           )}
         </div>
@@ -314,14 +318,14 @@ export default function PostCard({ p, auth, university, onDelete }) {
             <Avatar name={auth.user.name} size="sm" src={auth.user.avatar_url} builder={auth.user.avatar_builder} />
             <div className="flex-1 flex items-center rounded-full px-4 py-2 gap-2 input-neo">
               <input type="text" value={cmtText} onChange={e=>setCT(e.target.value)}
-                placeholder="Laissez un commentaire…"
+                placeholder={t('dashboard.postCard.commentPlaceholder')}
                 className="flex-1 bg-transparent outline-none text-xs" style={{color:'var(--text-1)'}} />
               <EmojiPicker placement="down" onPick={(emoji) => setCT((c) => (c || '') + emoji)}>
                 <Ic.Smile />
               </EmojiPicker>
             </div>
             {cmtText.trim() && (
-              <button type="submit" className="text-xs font-bold" style={{color:'var(--accent-1)'}}>Post</button>
+              <button type="submit" className="text-xs font-bold" style={{color:'var(--accent-1)'}}>{t('dashboard.postCard.postComment')}</button>
             )}
           </form>
         </div>
@@ -330,7 +334,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
       {shareToast && (
         <div className="absolute bottom-4 right-4 px-3 py-2 rounded-xl text-xs font-bold"
              style={{ background: 'var(--panel-bg)', border: '1px solid var(--border)', color: 'var(--text-1)' }}>
-          Lien copié
+          {t('dashboard.postCard.linkCopied')}
         </div>
       )}
 
@@ -346,14 +350,14 @@ export default function PostCard({ p, auth, university, onDelete }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 py-3 flex items-center justify-between shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-              <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>J&apos;aime · {likes}</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>{t('dashboard.postCard.likesModalTitle', { n: likes })}</p>
               <button type="button" onClick={() => setLikersOpen(false)} className="w-8 h-8 rounded-xl hover:bg-white/5" style={{ color: 'var(--text-2)' }}>
                 ×
               </button>
             </div>
             <ul className="overflow-y-auto p-2 space-y-1">
               {likersPreview.length === 0 ? (
-                <li className="text-xs px-2 py-4 text-center" style={{ color: 'var(--text-3)' }}>Aucun détail disponible.</li>
+                <li className="text-xs px-2 py-4 text-center" style={{ color: 'var(--text-3)' }}>{t('dashboard.postCard.noLikersDetail')}</li>
               ) : (
                 likersPreview.map((u) => (
                   <li key={u.id}>
@@ -380,7 +384,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
           style={{ background: 'var(--panel-bg)', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.55)' }}
         >
           <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
-            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Partager</p>
+            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>{t('dashboard.postCard.shareMenuTitle')}</p>
             <button onClick={() => setShareOpen(false)} className="w-8 h-8 rounded-xl hover:bg-white/5" style={{ color: 'var(--text-2)' }}>
               ×
             </button>
@@ -391,8 +395,8 @@ export default function PostCard({ p, auth, university, onDelete }) {
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5"
               style={{ color: 'var(--text-1)' }}
             >
-              <span className="text-sm font-medium">Copier le lien</span>
-              <span className="text-xs" style={{ color: 'var(--text-3)' }}>Ctrl+C</span>
+              <span className="text-sm font-medium">{t('dashboard.postCard.copyLink')}</span>
+              <span className="text-xs" style={{ color: 'var(--text-3)' }}>{t('dashboard.postCard.copyHint')}</span>
             </button>
 
             <a
@@ -403,7 +407,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
               style={{ color: 'var(--text-1)' }}
               onClick={() => setShareOpen(false)}
             >
-              <span className="text-sm font-medium">WhatsApp</span>
+              <span className="text-sm font-medium">{t('dashboard.postCard.whatsapp')}</span>
               <span className="text-xs" style={{ color: 'var(--text-3)' }}>wa.me</span>
             </a>
 
@@ -413,7 +417,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
               style={{ color: 'var(--text-1)' }}
               onClick={() => setShareOpen(false)}
             >
-              <span className="text-sm font-medium">Email</span>
+              <span className="text-sm font-medium">{t('dashboard.postCard.email')}</span>
               <span className="text-xs" style={{ color: 'var(--text-3)' }}>mailto</span>
             </a>
 
@@ -437,7 +441,7 @@ export default function PostCard({ p, auth, university, onDelete }) {
               style={{ color: 'var(--text-1)' }}
               onClick={() => setShareOpen(false)}
             >
-              <span className="text-sm font-medium">X</span>
+              <span className="text-sm font-medium">{t('dashboard.postCard.xTwitter')}</span>
               <span className="text-xs" style={{ color: 'var(--text-3)' }}>tweet</span>
             </a>
           </div>

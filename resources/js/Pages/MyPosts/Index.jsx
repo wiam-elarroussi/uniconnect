@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DASH_CSS } from '@/Components/Dashboard/dashStyles';
 import PostCard from '@/Components/Dashboard/PostCard';
 import Composer from '@/Components/Dashboard/Composer';
@@ -47,6 +48,7 @@ const THEME_VARS = {
 };
 
 export default function MyPostsIndex({ auth, university, posts = [], channels = [] }) {
+  const { t } = useTranslation();
   const [moodId, setMoodId] = useState(() =>
     typeof window === 'undefined' ? 'dark' : window.localStorage.getItem(MOOD_STORAGE_KEY) || 'dark'
   );
@@ -78,7 +80,7 @@ export default function MyPostsIndex({ auth, university, posts = [], channels = 
   };
 
   const handleDelete = (id) => {
-    if (confirm('Supprimer ce message définitivement ?')) {
+    if (confirm(t('dashboard.confirmDeletePost'))) {
       router.delete(route('posts.destroy', id));
     }
   };
@@ -87,21 +89,21 @@ export default function MyPostsIndex({ auth, university, posts = [], channels = 
     <AuthenticatedLayout
       header={
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className="font-semibold">Mes publications</span>
+          <span className="font-semibold">{t('pages.myPosts.header')}</span>
           <Link
             href={route('dashboard')}
-            className="text-xs font-medium text-blue-600 hover:underline"
+            className="text-xs font-medium text-blue-600 hover:underline shrink-0"
           >
-            ← Fil d&apos;actualité
+            {t('pages.myPosts.backFeed')}
           </Link>
         </div>
       }
     >
-      <Head title={`Mes posts · ${university}`} />
+      <Head title={t('pages.myPosts.headTitle', { university })} />
       <style>{DASH_CSS}</style>
 
       <div
-        className="dash-root py-6 px-4 sm:px-6 lg:px-8 min-h-[60vh]"
+        className="dash-root py-4 sm:py-6 px-3 sm:px-6 lg:px-8 min-h-[50dvh] sm:min-h-[60vh] pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         style={{
           background: moodId === 'light' ? 'linear-gradient(180deg,#f8fafc,#fff)' : 'var(--bg-ambient, #060818)',
           '--bg-ambient':
@@ -111,9 +113,11 @@ export default function MyPostsIndex({ auth, university, posts = [], channels = 
           ...theme,
         }}
       >
-        <div className="relative max-w-[min(100%,520px)] mx-auto space-y-4" style={{ zIndex: 1 }}>
-          <p className="text-sm px-1" style={{ color: 'var(--text-3)' }}>
-            Ici uniquement <strong style={{ color: 'var(--text-2)' }}>vos</strong> publications. Le fil général n’affiche plus vos posts.
+        <div className="relative max-w-[min(100%,520px)] mx-auto space-y-4 w-full min-w-0" style={{ zIndex: 1 }}>
+          <p className="text-sm px-1 leading-relaxed" style={{ color: 'var(--text-3)' }}>
+            {t('pages.myPosts.introBefore')}
+            <strong style={{ color: 'var(--text-2)' }}>{t('pages.myPosts.introStrong')}</strong>
+            {t('pages.myPosts.introAfter')}
           </p>
 
           <Composer
@@ -128,7 +132,7 @@ export default function MyPostsIndex({ auth, university, posts = [], channels = 
           {posts.length === 0 ? (
             <div className="glass-card rounded-2xl p-10 text-center">
               <p className="text-sm" style={{ color: 'var(--text-3)' }}>
-                Vous n’avez pas encore publié. Utilisez le formulaire ci-dessus.
+                {t('pages.myPosts.empty')}
               </p>
             </div>
           ) : (

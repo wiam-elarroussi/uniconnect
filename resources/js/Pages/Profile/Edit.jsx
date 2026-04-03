@@ -4,7 +4,8 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // ── Icônes ────────────────────────────────────────────────────────────────
 const IconUser     = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
@@ -13,31 +14,6 @@ const IconTrash    = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentC
 const IconShield   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 const IconChevron  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><polyline points="9 18 15 12 9 6"/></svg>;
 
-// ── Tab config ─────────────────────────────────────────────────────────────
-const TABS = [
-    {
-        id: 'info',
-        label: 'Informations',
-        icon: <IconUser />,
-        color: 'blue',
-        desc: 'Nom, email et vérification',
-    },
-    {
-        id: 'password',
-        label: 'Mot de passe',
-        icon: <IconLock />,
-        color: 'indigo',
-        desc: 'Sécurité du compte',
-    },
-    {
-        id: 'danger',
-        label: 'Zone de danger',
-        icon: <IconTrash />,
-        color: 'red',
-        desc: 'Suppression du compte',
-    },
-];
-
 const colorMap = {
     blue:   { bg: 'bg-blue-50',   text: 'text-blue-600',   border: 'border-blue-200',  activeBg: 'bg-blue-600',   ring: 'rgba(37,99,235,0.15)'  },
     indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200',activeBg: 'bg-indigo-600', ring: 'rgba(79,70,229,0.15)'  },
@@ -45,24 +21,57 @@ const colorMap = {
 };
 
 export default function Edit({ mustVerifyEmail, status }) {
+    const { t } = useTranslation();
     const { auth } = usePage().props;
     const [activeTab, setActiveTab] = useState('info');
     const user = auth.user;
     const initial = user.name.charAt(0).toUpperCase();
     const roleLabel = user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Étudiant·e';
 
-    const active = TABS.find(t => t.id === activeTab);
+    const TABS = useMemo(
+        () => [
+            {
+                id: 'info',
+                label: t('profile.tabInfo'),
+                icon: <IconUser />,
+                color: 'blue',
+                desc: t('profile.tabInfoDesc'),
+            },
+            {
+                id: 'password',
+                label: t('profile.tabPassword'),
+                icon: <IconLock />,
+                color: 'indigo',
+                desc: t('profile.tabPasswordDesc'),
+            },
+            {
+                id: 'danger',
+                label: t('profile.tabDanger'),
+                icon: <IconTrash />,
+                color: 'red',
+                desc: t('profile.tabDangerDesc'),
+            },
+        ],
+        [t],
+    );
+
+    const rightsItems = useMemo(() => {
+        const arr = t('profile.rightsItems', { returnObjects: true });
+        return Array.isArray(arr) ? arr : [];
+    }, [t]);
+
+    const active = TABS.find((tab) => tab.id === activeTab);
     const c = colorMap[active.color];
 
     return (
         <AuthenticatedLayout
             header={
                 <span className="text-slate-500 font-medium">
-                    Mon compte <span className="text-slate-900 font-bold">· Profil</span>
+                    {t('profile.accountHeader')}
                 </span>
             }
         >
-            <Head title="Mon Profil · UniConnect" />
+            <Head title={t('profile.headTitle')} />
 
             <style>{`
                 @keyframes fadeUp {
@@ -153,10 +162,10 @@ export default function Edit({ mustVerifyEmail, status }) {
                             {/* Charte mini */}
                             <div className="mt-4 bg-gradient-to-br from-slate-900 to-blue-950 rounded-2xl p-4">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                    <IconShield /> Vos droits
+                                    <IconShield /> {t('profile.rightsTitle')}
                                 </p>
                                 <ul className="space-y-1.5">
-                                    {['Droit à l\'oubli', 'Données minimisées', 'Chiffrement HTTPS', 'Zéro revente'].map(item => (
+                                    {rightsItems.map((item) => (
                                         <li key={item} className="flex items-center gap-1.5 text-[10px] text-slate-400">
                                             <span className="text-emerald-400">✦</span> {item}
                                         </li>
@@ -203,9 +212,9 @@ export default function Edit({ mustVerifyEmail, status }) {
                                                     <IconTrash />
                                                 </span>
                                                 <div>
-                                                    <p className="text-sm font-bold text-red-700">Zone de danger irréversible</p>
+                                                    <p className="text-sm font-bold text-red-700">{t('profile.dangerBannerTitle')}</p>
                                                     <p className="text-xs text-red-500 mt-0.5 leading-relaxed">
-                                                        La suppression de votre compte est définitive. Conformément au RGPD, toutes vos données seront effacées (Droit à l'oubli).
+                                                        {t('profile.dangerBannerBody')}
                                                     </p>
                                                 </div>
                                             </div>

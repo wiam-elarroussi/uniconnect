@@ -2,6 +2,7 @@
 
 import { Head, useForm } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import WelcomeStyles                          from '@/Components/Welcome/WelcomeStyles';
 import WelcomeNav                             from '@/Components/Welcome/WelcomeNav';
@@ -13,9 +14,9 @@ import {
   CtaSection,
   WelcomeFooter,
 } from '@/Components/Welcome/TestimonialsSection';
-import { TESTIMONIALS }                       from '@/Components/Welcome/constants';
 
 function ContactSection() {
+  const { t } = useTranslation();
   const { data, setData, post, processing, errors, wasSuccessful } = useForm({
     name: '',
     email: '',
@@ -28,18 +29,18 @@ function ContactSection() {
   };
 
   return (
-    <section className="relative z-10 py-20 px-6">
+    <section className="relative z-10 py-16 sm:py-20 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto rounded-3xl border border-blue-100 bg-white/85 backdrop-blur p-8 md:p-10">
-        <h3 className="text-2xl font-black text-slate-900 mb-3">Contactez-nous</h3>
+        <h3 className="text-2xl font-black text-slate-900 mb-3">{t('welcome.contactTitle')}</h3>
         <p className="text-slate-600 mb-6">
-          Partenariat universitaire, signalement ou question : écrivez-nous. Les messages sont transmis à l&apos;équipe UniConnect.
+          {t('welcome.contactIntro')}
         </p>
         <div className="flex flex-wrap gap-3 mb-8">
           <a
             href="mailto:contact@uniconnect.ma"
             className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold shadow-md shadow-blue-200/50 hover:bg-blue-500 transition-colors"
           >
-            Email
+            {t('welcome.email')}
           </a>
           <a
             href="https://wa.me/212776564469"
@@ -47,20 +48,20 @@ function ContactSection() {
             rel="noreferrer"
             className="px-5 py-2.5 rounded-xl border-2 border-slate-200 text-slate-800 font-semibold hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
           >
-            WhatsApp
+            {t('welcome.whatsapp')}
           </a>
         </div>
 
         {wasSuccessful && (
           <p className="mb-4 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
-            Merci ! Votre message a bien été envoyé.
+            {t('welcome.contactSuccess')}
           </p>
         )}
 
         <form onSubmit={submit} className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Nom</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">{t('welcome.name')}</label>
               <input
                 value={data.name}
                 onChange={(e) => setData('name', e.target.value)}
@@ -70,7 +71,7 @@ function ContactSection() {
               {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Email</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1">{t('welcome.email')}</label>
               <input
                 type="email"
                 value={data.email}
@@ -82,7 +83,7 @@ function ContactSection() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">Message</label>
+            <label className="block text-xs font-bold text-slate-500 mb-1">{t('welcome.message')}</label>
             <textarea
               value={data.body}
               onChange={(e) => setData('body', e.target.value)}
@@ -97,7 +98,7 @@ function ContactSection() {
             disabled={processing}
             className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-500 disabled:opacity-50"
           >
-            {processing ? 'Envoi…' : 'Envoyer le message'}
+            {processing ? t('welcome.sending') : t('welcome.sendMessage')}
           </button>
         </form>
       </div>
@@ -106,10 +107,13 @@ function ContactSection() {
 }
 
 export default function Welcome({ auth }) {
+  const { t } = useTranslation();
   const [mousePos, setMousePos]   = useState({ x: 0, y: 0 });
   const [scrolled, setScrolled]   = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const heroRef                   = useRef(null);
+  const testimonialItems = t('welcomePage.testimonials.items', { returnObjects: true });
+  const testimonialCount = Array.isArray(testimonialItems) ? testimonialItems.length : 6;
 
   // Halo souris + scroll
   useEffect(() => {
@@ -125,16 +129,17 @@ export default function Welcome({ auth }) {
 
   // Auto-rotation témoignages
   useEffect(() => {
-    const t = setInterval(() => setActiveTab(p => (p + 1) % TESTIMONIALS.length), 4000);
-    return () => clearInterval(t);
-  }, []);
+    if (testimonialCount < 1) return undefined;
+    const id = setInterval(() => setActiveTab((p) => (p + 1) % testimonialCount), 4000);
+    return () => clearInterval(id);
+  }, [testimonialCount]);
 
   return (
     <>
-      <Head title="UniConnect — L'Entraide Académique Éthique" />
+      <Head title={t('welcomePage.headTitle')} />
       <WelcomeStyles />
 
-      <div className="relative bg-slate-50 overflow-x-hidden">
+      <div className="relative bg-slate-50 overflow-x-hidden min-w-0">
 
         {/* Halo souris */}
         <div

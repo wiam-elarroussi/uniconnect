@@ -1,9 +1,11 @@
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const NAV_COMPACT_STORAGE = 'uniconnect.nav.compact';
 
@@ -73,13 +75,8 @@ function NavGlyph({ name, className = 'w-5 h-5' }) {
     }
 }
 
-function campusRoleLabel(campusRole) {
-    if (campusRole === 'teacher') return 'Enseignant·e';
-    if (campusRole === 'staff') return 'Personnel';
-    return 'Étudiant·e';
-}
-
 export default function AuthenticatedLayout({ header, children }) {
+    const { t } = useTranslation();
     const user = usePage().props.auth.user;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -119,33 +116,46 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const currentHour = new Date().getHours();
     const isFocusMode = currentHour >= 22 || currentHour < 7;
-    const firstName = user.name.split(' ')[0];
-    const initial  = user.name.charAt(0).toUpperCase();
-    const campus = campusRoleLabel(user?.campus_role || 'student');
-    const roleLabel =
-        user.role === 'super_admin'
-            ? 'Super Admin'
-            : user.role === 'admin'
-              ? `Admin · ${campus}`
-              : campus;
+    const firstName = String(user?.name ?? '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)[0] ?? '';
+    const initial = (user?.name || '?').charAt(0).toUpperCase();
+
+    const campus = useMemo(() => {
+        const r = user?.campus_role || 'student';
+        if (r === 'teacher') return t('nav.campus.teacher');
+        if (r === 'staff') return t('nav.campus.staff');
+        return t('nav.campus.student');
+    }, [user?.campus_role, t]);
+
+    const roleLabel = useMemo(() => {
+        if (user.role === 'super_admin') return t('nav.role.super_admin');
+        if (user.role === 'admin') return `${t('nav.role.admin')} · ${campus}`;
+        return campus;
+    }, [user.role, campus, t]);
 
     const isSuperAdmin = user?.role === 'super_admin';
     const isUniAdmin = user?.role === 'admin';
 
-    const mainNavItems = isSuperAdmin
-        ? [
-              { label: 'Super administration', route: 'superadmin.dashboard', icon: 'super' },
-              { label: 'Mes posts', route: 'my-posts.index', icon: 'posts' },
-          ]
-        : [
-              { label: 'Fil d\'actualité', route: 'dashboard', icon: 'home' },
-              ...(user?.university_id ? [{ label: 'Canaux', route: 'channels.index', icon: 'channels' }] : []),
-              { label: 'Mes posts', route: 'my-posts.index', icon: 'posts' },
-              ...(isUniAdmin ? [{ label: 'Modération', route: 'admin.dashboard', icon: 'shield' }] : []),
-              { label: 'Messages', route: 'messages.index', icon: 'chat' },
-              { label: 'Stories', route: 'stories.index', icon: 'stories' },
-              { label: 'Sauvegardés', route: 'saved-posts.index', icon: 'bookmark' },
-          ];
+    const mainNavItems = useMemo(
+        () =>
+            isSuperAdmin
+                ? [
+                      { label: t('nav.superAdmin'), route: 'superadmin.dashboard', icon: 'super' },
+                      { label: t('nav.myPosts'), route: 'my-posts.index', icon: 'posts' },
+                  ]
+                : [
+                      { label: t('nav.feed'), route: 'dashboard', icon: 'home' },
+                      ...(user?.university_id ? [{ label: t('nav.channels'), route: 'channels.index', icon: 'channels' }] : []),
+                      { label: t('nav.myPosts'), route: 'my-posts.index', icon: 'posts' },
+                      ...(isUniAdmin ? [{ label: t('nav.moderation'), route: 'admin.dashboard', icon: 'shield' }] : []),
+                      { label: t('nav.messages'), route: 'messages.index', icon: 'chat' },
+                      { label: t('nav.stories'), route: 'stories.index', icon: 'stories' },
+                      { label: t('nav.saved'), route: 'saved-posts.index', icon: 'bookmark' },
+                  ],
+        [t, isSuperAdmin, user?.university_id, isUniAdmin],
+    );
 
     const layoutVars =
         moodId === 'light'
@@ -274,12 +284,13 @@ export default function AuthenticatedLayout({ header, children }) {
 
                         {/* ── Droite : Focus badge + User menu ── */}
                         <div className="hidden sm:flex items-center gap-3">
+                            <LanguageSwitcher variant="compact" />
 
                             {/* Badge Mode Focus */}
                             {isFocusMode && (
                                 <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
                                     <span className={`w-1.5 h-1.5 rounded-full ${isLight ? 'bg-amber-400' : 'bg-amber-300'}`} />
-                                    Mode Focus
+                                    {t('nav.focusMode')}
                                 </span>
                             )}
 
@@ -379,7 +390,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                                                 </svg>
                                             </span>
-                                            Mon profil
+                                            {t('nav.profile')}
                                         </Dropdown.Link>
 
                                         <label
@@ -393,7 +404,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 checked={!navCompact}
                                                 onChange={() => setNavCompact((v) => !v)}
                                             />
-                                            <span>Menu : libellés visibles</span>
+                                            <span>{t('nav.menuLabelsVisible')}</span>
                                         </label>
 
                                         {isSuperAdmin && (
@@ -403,7 +414,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-200 hover:bg-slate-800/60'
                                                 }`}
                                             >
-                                                Fil d&apos;actualité (vue étudiant)
+                                                {t('nav.studentFeedOptional')}
                                             </Dropdown.Link>
                                         )}
 
@@ -426,7 +437,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                                 </svg>
                                             </span>
-                                            Déconnexion
+                                            {t('nav.logout')}
                                         </Dropdown.Link>
                                     </div>
                                 </Dropdown.Content>
@@ -441,7 +452,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     ? 'border-gray-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600'
                                     : 'border-white/10 bg-slate-900/40 text-slate-300 hover:border-blue-400/40 hover:text-blue-300'
                             }`}
-                            aria-label="Menu"
+                            aria-label={t('nav.menu')}
                         >
                             <svg className="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                 <path
@@ -466,6 +477,9 @@ export default function AuthenticatedLayout({ header, children }) {
                             isLight ? 'bg-white border border-gray-100' : 'bg-slate-900/60 border border-white/10'
                         }`}
                     >
+                        <div className={`p-3 flex justify-end border-b ${isLight ? 'border-gray-100' : 'border-white/10'}`}>
+                            <LanguageSwitcher variant="compact" />
+                        </div>
 
                         {/* Nav links */}
                         <div className="p-2 border-b border-gray-50 space-y-1">
@@ -485,7 +499,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     active={route().current('dashboard')}
                                     className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium opacity-90"
                                 >
-                                    + Fil étudiant (optionnel)
+                                    + {t('nav.studentFeedOptional')}
                                 </ResponsiveNavLink>
                             )}
                         </div>
@@ -516,7 +530,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         isLight ? 'text-slate-600' : 'text-slate-300'
                                     }`}
                                 >
-                                    Mon profil ({roleLabel})
+                                    {t('nav.profile')} ({roleLabel})
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink
                                     method="post"
@@ -526,7 +540,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         isLight ? 'text-red-500' : 'text-red-300'
                                     } w-full`}
                                 >
-                                    Déconnexion
+                                    {t('nav.logout')}
                                 </ResponsiveNavLink>
                             </div>
                         </div>
@@ -546,13 +560,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                         className="text-xs font-bold"
                                         style={{ color: isLight ? 'rgb(120,53,15)' : '#f6ad55' }}
                                     >
-                                        Mode Focus actif
+                                        {t('nav.focusModeActive')}
                                     </p>
                                     <p
                                         className="text-[10px]"
                                         style={{ color: isLight ? 'rgb(217,119,6)' : 'rgba(246,173,85,0.75)' }}
                                     >
-                                        Publications suspendues pour protéger votre sommeil.
+                                        {t('nav.focusModeHint')}
                                     </p>
                                 </div>
                             </div>
@@ -572,7 +586,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         borderColor: moodId === 'light' ? 'rgba(229,231,235,1)' : 'rgba(255,255,255,0.10)',
                     }}
                 >
-                    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
                         <div className="flex items-center gap-3">
                             {/* Accent pill */}
                             <span className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-600 to-indigo-500 flex-shrink-0" />
@@ -590,7 +604,7 @@ export default function AuthenticatedLayout({ header, children }) {
             {/* ══════════════════════════════════════════════════════════════ */}
             {/* MAIN                                                            */}
             {/* ══════════════════════════════════════════════════════════════ */}
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
 
             {/* ══════════════════════════════════════════════════════════════ */}
             {/* FOOTER minimaliste                                              */}
@@ -610,14 +624,14 @@ export default function AuthenticatedLayout({ header, children }) {
                         <ApplicationLogo size="sm" showText={true} />
                     </div>
                     <p>
-                        Projet PIDR · SupMTI · 2026 ·{' '}
+                        {t('nav.footerProject')}{' '}
                         <span className="font-medium" style={{ color: 'var(--text-2)' }}>
-                            Engineered by Wiam & Rim
+                            {t('nav.footerCredits')}
                         </span>
                     </p>
                     <div className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-emerald-500/90 rounded-full" />
-                        <span>Éthique · RGPD · Zéro pub</span>
+                        <span>{t('nav.footerEthics')}</span>
                     </div>
                 </div>
             </footer>

@@ -277,9 +277,14 @@ export default function AdminDashboard({
       banUser:    route('admin.users.ban', id),
     };
     const methods = { deletePost: 'delete', deleteUser: 'delete', banUser: 'patch' };
-    router[methods[type]](routes[type], {
+    const visitOpts = {
+      preserveScroll: true,
       onSuccess: () => { setFlash('Action effectuée avec succès.'); setConfirm(null); setTimeout(() => setFlash(null), 3000); },
-    });
+    };
+    if (type === 'banUser') {
+      visitOpts.only = ['campusMembers', 'recentUsers'];
+    }
+    router[methods[type]](routes[type], visitOpts);
   };
 
   const TABS = [

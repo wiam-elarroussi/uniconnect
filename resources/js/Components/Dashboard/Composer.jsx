@@ -1,10 +1,12 @@
 // resources/js/Components/Dashboard/Composer.jsx
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Avatar from './Avatar';
 import EmojiPicker from './EmojiPicker';
 import { Ic } from './Icons';
 
 export default function Composer({ auth, isFocusMode, onSubmit, processing, errors, channels = [] }) {
+  const { t } = useTranslation();
   const [body, setBody]       = useState('');
   const [media, setMedia]     = useState(null);
   const [channelId, setChannelId] = useState('');
@@ -53,11 +55,11 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
             <span style={{color:'#f6ad55'}}><Ic.Moon /></span>
           </div>
           <div>
-            <p className="text-xs font-display font-bold" style={{color:'#f6ad55'}}>Mode Focus · Neurones en repos</p>
-            <p className="text-[10px]" style={{color:'rgba(246,173,85,0.6)'}}>Publication suspendue — UniConnect protège votre cycle cognitif.</p>
+            <p className="text-xs font-display font-bold" style={{color:'#f6ad55'}}>{t('dashboard.composer.focusTitle')}</p>
+            <p className="text-[10px]" style={{color:'rgba(246,173,85,0.6)'}}>{t('dashboard.composer.focusSubtitle')}</p>
           </div>
           <span className="ml-auto text-[9px] px-2 py-1 rounded-full font-bold" style={{background:'rgba(246,173,85,0.1)',color:'#f6ad55',border:'1px solid rgba(246,173,85,0.2)'}}>
-            22:00–07:00
+            {t('dashboard.composer.focusHours')}
           </span>
         </div>
       )}
@@ -73,7 +75,7 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               disabled={isFocusMode}
-              placeholder={isFocusMode ? 'Vos pensées attendent demain…' : 'Partagez une insight, question ou ressource…'}
+              placeholder={isFocusMode ? t('dashboard.composer.placeholderFocus') : t('dashboard.composer.placeholder')}
               rows={focused ? 3 : 2}
               className="w-full bg-transparent outline-none text-sm leading-relaxed resize-none disabled:cursor-not-allowed"
               style={{color:'var(--text-1)'}}
@@ -82,7 +84,7 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
             {channels.length > 0 && (
               <div className="mt-2">
                 <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
-                  Publier en tant que canal (optionnel)
+                  {t('dashboard.composer.publishAsChannel')}
                 </label>
                 <select
                   value={channelId}
@@ -90,7 +92,7 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
                   className="mt-1 w-full rounded-xl px-3 py-2 input-neo text-xs"
                   style={{ color: 'var(--text-1)', borderColor: 'var(--border)' }}
                 >
-                  <option value="">Mon compte personnel</option>
+                  <option value="">{t('dashboard.composer.personalAccount')}</option>
                   {channels.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -106,7 +108,7 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
             <div className="flex items-center justify-between">
               {/* Left tools */}
               <div className="flex items-center gap-1">
-                <label className="p-2 rounded-xl transition-all hover:bg-white/5 cursor-pointer" style={{color:'var(--text-3)'}} title="Media">
+                <label className="p-2 rounded-xl transition-all hover:bg-white/5 cursor-pointer" style={{color:'var(--text-3)'}} title={t('dashboard.composer.mediaTitle')}>
                   <Ic.Image />
                   <input
                     type="file"
@@ -152,7 +154,7 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
                   disabled={processing || (!body.trim() && !media) || isFocusMode}
                   className="btn-neon flex items-center gap-2 px-5 py-2 rounded-full text-xs font-display font-bold text-white">
                   {processing ? <Ic.Spin /> : <Ic.Send />}
-                  Diffuser
+                  {t('dashboard.composer.publish')}
                 </button>
               </div>
             </div>

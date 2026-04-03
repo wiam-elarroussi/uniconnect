@@ -1,8 +1,10 @@
 import { Link } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import Avatar from './Avatar';
 import { Ic } from './Icons';
 
 export default function StoriesBar({ auth, stories = [], onOpenStoryViewer }) {
+  const { t } = useTranslation();
   const myId = auth.user.id;
   const byUser = new Map();
   stories.forEach((s) => {
@@ -36,14 +38,14 @@ export default function StoriesBar({ auth, stories = [], onOpenStoryViewer }) {
     <div className="glass-card rounded-2xl px-4 py-4 noise">
       <div className="flex items-center justify-between mb-3 px-1">
         <span className="text-[10px] font-display font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-3)' }}>
-          Stories
+          {t('dashboard.storiesBar.title')}
         </span>
         <Link
           href={route('stories.index')}
           className="text-[9px] px-2 py-0.5 rounded-full"
           style={{ background: 'rgba(99,179,237,0.1)', color: 'var(--accent-1)', border: '1px solid rgba(99,179,237,0.2)' }}
         >
-          Voir tout
+          {t('dashboard.storiesBar.seeAll')}
         </Link>
       </div>
 
@@ -54,7 +56,7 @@ export default function StoriesBar({ auth, stories = [], onOpenStoryViewer }) {
               type="button"
               onClick={() => handleBubbleClick(myId)}
               className="rounded-full flex items-center justify-center border-0 bg-transparent p-0 cursor-pointer"
-              aria-label="Ma story"
+              aria-label={t('dashboard.storiesBar.myStoryAria')}
             >
               <Avatar name={auth.user.name} size="lg" story={byUser.has(myId)} online src={auth.user.avatar_url} builder={auth.user.avatar_builder} />
             </button>
@@ -63,7 +65,7 @@ export default function StoriesBar({ auth, stories = [], onOpenStoryViewer }) {
               onClick={(e) => e.stopPropagation()}
               className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full flex items-center justify-center border z-10"
               style={{ background: 'linear-gradient(135deg,#1a6cad,#2d3a8c)', borderColor: 'var(--bg-deep)' }}
-              title="Créer une story"
+              title={t('dashboard.storiesBar.createStoryTitle')}
             >
               <span style={{ color: 'white' }}>
                 <Ic.Plus />
@@ -71,7 +73,7 @@ export default function StoriesBar({ auth, stories = [], onOpenStoryViewer }) {
             </a>
           </div>
           <p className="text-[10px] font-medium truncate w-14 text-center" style={{ color: 'var(--text-2)' }}>
-            Vous
+            {t('dashboard.storiesBar.you')}
           </p>
         </div>
 

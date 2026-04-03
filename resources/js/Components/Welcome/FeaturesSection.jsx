@@ -1,17 +1,21 @@
 // resources/js/Components/Welcome/FeaturesSection.jsx
 
 import { useState } from 'react';
-import { FEATURES, TICKER_TAGS } from './constants';
+import { useTranslation } from 'react-i18next';
+import { FEATURE_LAYOUT } from './constants';
 
 // ── Ticker ──────────────────────────────────────────────────────────────────
 export function TickerBand() {
+  const { t } = useTranslation();
+  const tags = t('welcomePage.ticker', { returnObjects: true }) || [];
+
   return (
     <div className="relative z-10 bg-gradient-to-r from-blue-600 to-indigo-600 py-3 overflow-hidden">
       <div className="ticker-wrap">
         <div className="ticker-track">
           {[...Array(2)].map((_, i) => (
             <div key={i} className="flex items-center gap-8 px-4">
-              {TICKER_TAGS.map(tag => (
+              {Array.isArray(tags) && tags.map((tag) => (
                 <span key={tag} className="flex items-center gap-2 text-white/90 text-sm font-medium whitespace-nowrap">
                   <span className="text-emerald-300">✦</span> {tag}
                 </span>
@@ -69,23 +73,41 @@ function FeatureCard({ icon, color, title, desc, badge, index }) {
 
 // ── FeaturesSection ──────────────────────────────────────────────────────────
 export function FeaturesSection() {
+  const { t } = useTranslation();
+  const items = t('welcomePage.featureItems', { returnObjects: true }) || [];
+
   return (
-    <section id="features" className="relative z-10 py-24 px-6">
+    <section id="features" className="relative z-10 py-16 sm:py-24 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
           <span className="inline-block text-xs font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full mb-4">
-            Fonctionnalités
+            {t('welcomePage.features.sectionBadge')}
           </span>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
-            Conçu pour <span className="gradient-text">vous protéger</span><br />autant que vous aider
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
+            {t('welcomePage.features.titleLine1')} <span className="gradient-text">{t('welcomePage.features.titleHighlight')}</span>
+            <br />{t('welcomePage.features.titleLine2')}
           </h2>
           <p className="text-slate-500 max-w-xl mx-auto">
-            Chaque feature a été réfléchie à travers le prisme du Triple Bottom Line : People, Planet, Profit.
+            {t('welcomePage.features.subtitle')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map((f, i) => <FeatureCard key={f.title} {...f} index={i} />)}
+          {FEATURE_LAYOUT.map((layout, i) => {
+            const item = items[i];
+            if (!item) return null;
+            return (
+              <FeatureCard
+                key={i}
+                icon={layout.icon}
+                color={layout.color}
+                title={item.title}
+                desc={item.desc}
+                badge={item.badge}
+                index={i}
+              />
+            );
+          })}
         </div>
       </div>
     </section>

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -35,7 +36,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         /** @var \App\Models\User|null $user */
-        $user = Auth::user();
+        $user = Auth::user()?->fresh();
 
         if ($user && $user->is_banned) {
             Auth::guard('web')->logout();
@@ -64,7 +65,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): RedirectResponse|SymfonyResponse
     {
         Auth::guard('web')->logout();
 
@@ -72,6 +73,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Navigation pleine page : évite le blocage Inertia (déconnexion qui ne « termine » pas).
+        return Inertia::location('/');
     }
 }

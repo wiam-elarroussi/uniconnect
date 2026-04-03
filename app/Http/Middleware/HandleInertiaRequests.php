@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -29,8 +30,20 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $locale = app()->getLocale();
+        $localeDir = $locale === 'ar' ? 'rtl' : 'ltr';
+        $localeNames = Config::get('locales.names', []);
+
         return [
             ...parent::share($request),
+            'locale' => $locale,
+            'localeDir' => $localeDir,
+            'availableLocales' => collect(Config::get('locales.available', []))->map(function (string $code) use ($localeNames) {
+                return [
+                    'code' => $code,
+                    'label' => $localeNames[$code] ?? strtoupper($code),
+                ];
+            })->values()->all(),
             // Mis à jour à chaque visite Inertia : le front peut synchroniser <meta name="csrf-token"> pour éviter les 419.
             'csrf_token' => csrf_token(),
             'auth' => [

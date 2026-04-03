@@ -3,9 +3,11 @@ import Avatar from './Avatar';
 import { Ic } from './Icons';
 import { Link, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // ── ProfileCard ───────────────────────────────────────────────────────────────
 export function ProfileCard({ auth, posts, resources, myPostsCount }) {
+  const { t } = useTranslation();
   const myPosts = typeof myPostsCount === 'number'
     ? myPostsCount
     : posts.filter(p => p.user_id === auth.user.id).length;
@@ -35,7 +37,7 @@ export function ProfileCard({ auth, posts, resources, myPostsCount }) {
           <a href={route('profile.edit')}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all hover:bg-white/5"
             style={{color:'var(--accent-1)',border:'1px solid rgba(99,179,237,0.25)'}}>
-            <Ic.Edit /> Éditer
+            <Ic.Edit /> {t('dashboard.sidebar.edit')}
           </a>
         </div>
 
@@ -45,9 +47,9 @@ export function ProfileCard({ auth, posts, resources, myPostsCount }) {
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-1 pt-3" style={{borderTop:'1px solid var(--border)'}}>
           {[
-            { label:'Posts',     val: myPosts, color:'var(--accent-1)' },
-            { label:'Ressources',val: myRes,   color:'var(--accent-2)' },
-            { label:'Karma',     val: karma,   color:'var(--accent-3)' },
+            { label: t('dashboard.sidebar.posts'),     val: myPosts, color:'var(--accent-1)' },
+            { label: t('dashboard.sidebar.resources'), val: myRes,   color:'var(--accent-2)' },
+            { label: t('dashboard.sidebar.karma'),     val: karma,   color:'var(--accent-3)' },
           ].map(({ label, val, color }) => (
             <div key={label} className="text-center py-2 rounded-xl" style={{background:'rgba(255,255,255,0.02)'}}>
               <p className="font-display font-bold text-base" style={{color}}>{val}</p>
@@ -62,6 +64,9 @@ export function ProfileCard({ auth, posts, resources, myPostsCount }) {
 
 // ── LibraryCard ───────────────────────────────────────────────────────────────
 function ResItem({ res }) {
+  const { t } = useTranslation();
+  const catKey = { Cours: 'catCours', Exercice: 'catExercice', Projet: 'catProjet', Article: 'catArticle' };
+  const catLabel = t(`dashboard.sidebar.${catKey[res.category] || 'catCours'}`);
   const colors = {
     'Cours':    {c:'var(--accent-1)',bg:'rgba(99,179,237,0.08)',b:'rgba(99,179,237,0.15)'},
     'Exercice': {c:'var(--accent-3)',bg:'rgba(183,148,244,0.08)',b:'rgba(183,148,244,0.15)'},
@@ -82,7 +87,7 @@ function ResItem({ res }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between mb-0.5 gap-1 flex-wrap">
-          <span className="text-[9px] font-bold uppercase tracking-wider" style={{color:col.c}}>{res.category}</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider" style={{color:col.c}}>{catLabel}</span>
           {res.filiere && (
             <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md truncate max-w-[7rem]" style={{ color: 'var(--text-3)', border: '1px solid var(--border)' }}>
               {res.filiere}
@@ -103,6 +108,7 @@ function ResItem({ res }) {
 const FILIERES = ['', 'Informatique', 'Gestion', 'Marketing', 'Génie civil', 'Droit', 'Autre'];
 
 export function LibraryCard({ resources }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [filterCat, setFilterCat] = useState('');
   const [filterFiliere, setFilterFiliere] = useState('');
@@ -144,7 +150,7 @@ export function LibraryCard({ resources }) {
           <span className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'rgba(99,179,237,0.1)',color:'var(--accent-1)'}}>
             <Ic.Book />
           </span>
-          Bibliothèque
+          {t('dashboard.sidebar.libraryTitle')}
         </h3>
         <button onClick={() => setOpen(true)} className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
                 style={{color:'var(--accent-1)',border:'1px solid rgba(99,179,237,0.2)'}}>
@@ -156,7 +162,7 @@ export function LibraryCard({ resources }) {
           <input
             value={filterQ}
             onChange={(e) => setFilterQ(e.target.value)}
-            placeholder="Filtrer par mot-clé…"
+            placeholder={t('dashboard.sidebar.filterKeyword')}
             className="w-full rounded-lg px-2 py-1.5 text-[10px] input-neo"
             style={{ color: 'var(--text-1)', borderColor: 'var(--border)' }}
           />
@@ -167,9 +173,14 @@ export function LibraryCard({ resources }) {
               className="flex-1 min-w-[100px] rounded-lg px-2 py-1 text-[10px] input-neo"
               style={{ color: 'var(--text-1)', borderColor: 'var(--border)' }}
             >
-              <option value="">Toutes catégories</option>
-              {['Cours', 'Exercice', 'Projet', 'Article'].map((c) => (
-                <option key={c} value={c}>{c}</option>
+              <option value="">{t('dashboard.sidebar.allCategories')}</option>
+              {[
+                { v: 'Cours', k: 'catCours' },
+                { v: 'Exercice', k: 'catExercice' },
+                { v: 'Projet', k: 'catProjet' },
+                { v: 'Article', k: 'catArticle' },
+              ].map(({ v, k }) => (
+                <option key={v} value={v}>{t(`dashboard.sidebar.${k}`)}</option>
               ))}
             </select>
             <select
@@ -178,7 +189,7 @@ export function LibraryCard({ resources }) {
               className="flex-1 min-w-[100px] rounded-lg px-2 py-1 text-[10px] input-neo"
               style={{ color: 'var(--text-1)', borderColor: 'var(--border)' }}
             >
-              <option value="">Toutes filières</option>
+              <option value="">{t('dashboard.sidebar.allFilieres')}</option>
               {FILIERES.filter(Boolean).map((f) => (
                 <option key={f} value={f}>{f}</option>
               ))}
@@ -189,7 +200,7 @@ export function LibraryCard({ resources }) {
       <div className="p-3 space-y-1">
         {filteredResources.length > 0
           ? filteredResources.map(r => <ResItem key={r.id} res={r} />)
-          : <div className="py-8 text-center"><p className="text-xs" style={{color:'var(--text-3)'}}>Aucune ressource pour ces filtres.</p></div>
+          : <div className="py-8 text-center"><p className="text-xs" style={{color:'var(--text-3)'}}>{t('dashboard.sidebar.noResourcesFilter')}</p></div>
         }
       </div>
 
@@ -214,8 +225,8 @@ export function LibraryCard({ resources }) {
           >
             <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
               <div>
-                <p className="font-display font-bold text-sm" style={{ color: 'var(--text-1)' }}>Ajouter une ressource</p>
-                <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>Lien + catégorie, visible pour ton université.</p>
+                <p className="font-display font-bold text-sm" style={{ color: 'var(--text-1)' }}>{t('dashboard.sidebar.addResourceTitle')}</p>
+                <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.addResourceSubtitle')}</p>
               </div>
               <button onClick={() => setOpen(false)} className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-white/5" style={{ color: 'var(--text-2)' }}>
                 <span className="text-lg leading-none">×</span>
@@ -224,44 +235,49 @@ export function LibraryCard({ resources }) {
 
             <form onSubmit={submit} className="p-5 space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 9.5rem)' }}>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>Titre</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.titleLabel')}</label>
                 <input
                   value={data.title}
                   onChange={(e) => setData('title', e.target.value)}
                   className="w-full rounded-xl px-4 py-3 input-neo text-sm"
-                  placeholder="Ex: Cours Laravel (PDF)"
+                  placeholder={t('dashboard.sidebar.titlePlaceholder')}
                 />
                 {errors?.title && <p className="text-xs mt-1" style={{ color: '#fc8181' }}>⚠ {errors.title}</p>}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>Lien</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.linkLabel')}</label>
                 <input
                   value={data.link}
                   onChange={(e) => setData('link', e.target.value)}
                   className="w-full rounded-xl px-4 py-3 input-neo text-sm"
-                  placeholder="https://…"
+                  placeholder={t('dashboard.sidebar.linkPlaceholder')}
                 />
                 {errors?.link && <p className="text-xs mt-1" style={{ color: '#fc8181' }}>⚠ {errors.link}</p>}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>Catégorie</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.categoryLabel')}</label>
                 <select
                   value={data.category}
                   onChange={(e) => setData('category', e.target.value)}
                   className="w-full rounded-xl px-4 py-3 input-neo text-sm"
                   style={{ colorScheme: 'dark' }}
                 >
-                  {['Cours', 'Exercice', 'Projet', 'Article'].map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  {[
+                    { v: 'Cours', k: 'catCours' },
+                    { v: 'Exercice', k: 'catExercice' },
+                    { v: 'Projet', k: 'catProjet' },
+                    { v: 'Article', k: 'catArticle' },
+                  ].map(({ v, k }) => (
+                    <option key={v} value={v}>{t(`dashboard.sidebar.${k}`)}</option>
                   ))}
                 </select>
                 {errors?.category && <p className="text-xs mt-1" style={{ color: '#fc8181' }}>⚠ {errors.category}</p>}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>Filière (optionnel)</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.filiereLabel')}</label>
                 <select
                   value={data.filiere}
                   onChange={(e) => setData('filiere', e.target.value)}
@@ -269,7 +285,7 @@ export function LibraryCard({ resources }) {
                   style={{ colorScheme: 'dark' }}
                 >
                   {FILIERES.map((f) => (
-                    <option key={f || 'none'} value={f}>{f || '— Non précisé —'}</option>
+                    <option key={f || 'none'} value={f}>{f || t('dashboard.sidebar.filiereUnset')}</option>
                   ))}
                 </select>
                 {errors?.filiere && <p className="text-xs mt-1" style={{ color: '#fc8181' }}>⚠ {errors.filiere}</p>}
@@ -278,10 +294,10 @@ export function LibraryCard({ resources }) {
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/5"
                         style={{ color: 'var(--text-2)', border: '1px solid var(--border)' }}>
-                  Annuler
+                  {t('dashboard.sidebar.cancel')}
                 </button>
                 <button type="submit" disabled={processing} className="btn-neon px-5 py-2 rounded-xl text-xs font-display font-bold text-white">
-                  {processing ? 'Envoi…' : 'Ajouter'}
+                  {processing ? t('dashboard.sidebar.submitting') : t('dashboard.sidebar.submit')}
                 </button>
               </div>
             </form>
@@ -294,6 +310,8 @@ export function LibraryCard({ resources }) {
 
 // ── CharteCard ────────────────────────────────────────────────────────────────
 export function CharteCard() {
+  const { t } = useTranslation();
+  const charteItems = t('dashboard.sidebar.charteItems', { returnObjects: true }) || [];
   return (
     <div className="rounded-2xl p-4 relative overflow-hidden noise" style={{background:'linear-gradient(135deg,rgba(10,25,60,0.9),rgba(15,30,70,0.85))',border:'1px solid rgba(99,179,237,0.15)'}}>
       <div className="absolute top-0 right-0 w-24 h-24 rounded-full" style={{background:'radial-gradient(circle,rgba(99,179,237,0.15),transparent)',transform:'translate(30%,-30%)'}}/>
@@ -302,10 +320,10 @@ export function CharteCard() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{background:'rgba(118,228,176,0.15)',color:'var(--accent-2)'}}>
             <Ic.Shield />
           </div>
-          <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{color:'var(--text-2)'}}>Protocole Éthique</h3>
+          <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{color:'var(--text-2)'}}>{t('dashboard.sidebar.charteTitle')}</h3>
         </div>
         <ul className="space-y-1.5">
-          {['Respect & Bienveillance','Partage Académique','Zéro Harcèlement','Droit à l\'Erreur'].map((item,i) => (
+          {Array.isArray(charteItems) && charteItems.map((item, i) => (
             <li key={item} className="flex items-center gap-2 text-[10px]" style={{color:'var(--text-3)'}}>
               <span style={{color:['var(--accent-2)','var(--accent-1)','var(--accent-3)','var(--accent-hot)'][i]}}>✦</span>
               {item}
@@ -315,7 +333,7 @@ export function CharteCard() {
         <div className="flex items-center gap-1.5 mt-3 pt-3" style={{borderTop:'1px solid rgba(255,255,255,0.06)'}}>
           <span className="w-1.5 h-1.5 rounded-full d-glow" style={{background:'var(--accent-2)'}}/>
           <p className="text-[8px] font-bold uppercase tracking-widest" style={{color:'var(--text-3)'}}>
-            100% Éthique · RGPD Compliant
+            {t('dashboard.sidebar.charteFooter')}
           </p>
         </div>
       </div>
@@ -325,7 +343,8 @@ export function CharteCard() {
 
 // ── TrendingCard ──────────────────────────────────────────────────────────────
 export function TrendingCard({ tags = [] }) {
-  const hotThreshold = tags.length ? Math.max(...tags.map((t) => t.posts ?? 0), 1) * 0.5 : 0;
+  const { t } = useTranslation();
+  const hotThreshold = tags.length ? Math.max(...tags.map((row) => row.posts ?? 0), 1) * 0.5 : 0;
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden noise">
@@ -333,11 +352,11 @@ export function TrendingCard({ tags = [] }) {
         <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'rgba(246,173,85,0.1)',color:'var(--accent-hot)'}}>
           <Ic.Fire />
         </div>
-        <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{color:'var(--text-2)'}}>Trending</h3>
+        <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{color:'var(--text-2)'}}>{t('dashboard.sidebar.trending')}</h3>
       </div>
       <div className="p-3 space-y-0.5">
         {tags.length === 0 ? (
-          <p className="text-[10px] px-2 py-3" style={{ color: 'var(--text-3)' }}>Pas encore de hashtags dans les 14 derniers jours.</p>
+          <p className="text-[10px] px-2 py-3" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.trendingEmpty')}</p>
         ) : (
           tags.map(({ tag, posts }, i) => {
             const hot = (posts ?? 0) >= hotThreshold && (posts ?? 0) > 1;
@@ -361,17 +380,18 @@ export function TrendingCard({ tags = [] }) {
 
 // ── FollowSuggestionsCard ─────────────────────────────────────────────────────
 export function FollowSuggestionsCard({ suggestions = [] }) {
+  const { t } = useTranslation();
   return (
     <div className="glass-card rounded-2xl overflow-hidden noise">
       <div className="flex items-center gap-2 px-4 py-3.5" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(183,148,244,0.12)', color: 'var(--accent-2)' }}>
           <Ic.Users />
         </div>
-        <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>Suggestions</h3>
+        <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>{t('dashboard.sidebar.suggestions')}</h3>
       </div>
       <div className="p-3 space-y-2">
         {suggestions.length === 0 ? (
-          <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>Vous suivez déjà tout le monde ou il n’y a personne d’autre.</p>
+          <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.suggestionsEmpty')}</p>
         ) : (
           suggestions.map((u) => (
             <div key={u.id} className="flex items-center justify-between gap-2 rounded-xl px-2 py-1.5 hover:bg-white/5">
@@ -384,7 +404,7 @@ export function FollowSuggestionsCard({ suggestions = [] }) {
                 className="text-[10px] font-bold px-2 py-1 rounded-lg shrink-0"
                 style={{ color: 'var(--accent-1)', border: '1px solid rgba(99,179,237,0.25)' }}
               >
-                Voir
+                {t('dashboard.sidebar.view')}
               </Link>
             </div>
           ))
@@ -396,6 +416,7 @@ export function FollowSuggestionsCard({ suggestions = [] }) {
 
 // ── ActiveMembersCard ─────────────────────────────────────────────────────────
 export function ActiveMembersCard({ members = [] }) {
+  const { t } = useTranslation();
   const n = members.length;
   const shown = members.slice(0, 6);
   const rest = Math.max(0, n - shown.length);
@@ -406,14 +427,14 @@ export function ActiveMembersCard({ members = [] }) {
         <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'rgba(99,179,237,0.1)',color:'var(--accent-1)'}}>
           <Ic.Users />
         </div>
-        <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{color:'var(--text-2)'}}>En ligne</h3>
+        <h3 className="font-display font-bold text-xs uppercase tracking-wider" style={{color:'var(--text-2)'}}>{t('dashboard.sidebar.online')}</h3>
         <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full font-bold" style={{background:'rgba(118,228,176,0.1)',color:'var(--accent-2)',border:'1px solid rgba(118,228,176,0.2)'}}>
-          {n} actif{n !== 1 ? 's' : ''}
+          {n === 1 ? t('dashboard.sidebar.activeCountOne') : t('dashboard.sidebar.activeCount', { n })}
         </span>
       </div>
       <div className="p-4">
         {n === 0 ? (
-          <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>Personne d’autre en ligne (15 dernières minutes) pour ton campus.</p>
+          <p className="text-[10px]" style={{ color: 'var(--text-3)' }}>{t('dashboard.sidebar.onlineEmpty')}</p>
         ) : (
           <>
             <div className="flex -space-x-2 mb-3 flex-wrap gap-y-2">
@@ -430,7 +451,7 @@ export function ActiveMembersCard({ members = [] }) {
               )}
             </div>
             <p className="text-[10px]" style={{color:'var(--text-3)'}}>
-              <span style={{color:'var(--accent-2)'}} className="font-bold">Activité récente</span> · dernières 15 min
+              <span style={{color:'var(--accent-2)'}} className="font-bold">{t('dashboard.sidebar.recentActivity')}</span> · {t('dashboard.sidebar.last15')}
             </p>
           </>
         )}

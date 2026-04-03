@@ -10,12 +10,13 @@ use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class AdminController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         /** @var \App\Models\User $admin */
         $admin = Auth::user();
@@ -23,60 +24,19 @@ class AdminController extends Controller
         $universityId = $admin->university_id;
         $university = optional($admin->university)->name ?? 'Université';
 
-        $totalUsers = User::where('university_id', $universityId)->where('role', 'student')->count();
-        $totalPosts = Post::where('university_id', $universityId)->count();
-        $postsToday = Post::where('university_id', $universityId)->whereDate('created_at', today())->count();
-        $newUsersWeek = User::where('university_id', $universityId)->where('created_at', '>=', now()->subDays(7))->count();
-        $activeUsers = User::where('university_id', $universityId)->where('last_seen_at', '>=', now()->subMinutes(15))->count();
+        $partialKeys = null;
+        if ($request->header('X-Inertia')
+            && ($partial = $request->header('X-Inertia-Partial-Data'))
+            && $request->header('X-Inertia-Partial-Component') === 'Admin/Dashboard') {
+            $parsed = array_filter(array_map('trim', explode(',', $partial)));
+            if ($parsed !== []) {
+                $partialKeys = $parsed;
+            }
+        }
 
-        $postsChart = collect(range(6, 0))->map(fn ($i) => [
-            'date' => now()->subDays($i)->format('d/m'),
-            'count' => Post::where('university_id', $universityId)->whereDate('created_at', now()->subDays($i))->count(),
-        ])->values();
+        $props = $this->adminDashboardProps($universityId, $university, $partialKeys);
 
-        $topContributors = User::where('university_id', $universityId)
-            ->withCount('posts')
-            ->where('role', 'student')
-            ->orderByDesc('posts_count')
-            ->limit(5)
-            ->get(['id', 'name', 'email', 'created_at']);
-
-        $recentPosts = Post::with('user:id,name,email')
-            ->where('university_id', $universityId)
-            ->latest()
-            ->limit(10)
-            ->get();
-
-        $recentUsers = User::where('university_id', $universityId)
-            ->latest()
-            ->limit(8)
-            ->get(['id', 'name', 'email', 'created_at', 'is_banned', 'campus_role', 'role']);
-
-        $campusMembers = User::where('university_id', $universityId)
-            ->where('role', '!=', 'super_admin')
-            ->orderBy('name')
-            ->limit(250)
-            ->get(['id', 'name', 'email', 'created_at', 'is_banned', 'campus_role', 'role']);
-
-        $channels = Channel::where('university_id', $universityId)->orderBy('name')->get(['id', 'name', 'slug', 'created_at']);
-
-        $libraryResources = Resource::where('university_id', $universityId)
-            ->with('user:id,name')
-            ->latest()
-            ->limit(40)
-            ->get();
-
-        return Inertia::render('Admin/Dashboard', [
-            'university' => $university,
-            'stats' => compact('totalUsers', 'totalPosts', 'postsToday', 'newUsersWeek', 'activeUsers'),
-            'postsChart' => $postsChart,
-            'topContributors' => $topContributors,
-            'recentPosts' => $recentPosts,
-            'recentUsers' => $recentUsers,
-            'campusMembers' => $campusMembers,
-            'channels' => $channels,
-            'libraryResources' => $libraryResources,
-        ]);
+        return Inertia::render('Admin/Dashboard', $props);
     }
 
     public function updateCampusRole(Request $request, User $user)
@@ -162,13 +122,96 @@ class AdminController extends Controller
     public function toggleBanUser(User $user)
     {
         $this->authorizeUniversity($user);
-        $user->update(['is_banned' => ! $user->is_banned]);
+        $nextBanned = ! (bool) $user->is_banned;
+        User::whereKey($user->id)->update(['is_banned' => $nextBanned]);
+        if ($nextBanned) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+        $user->refresh();
         $msg = $user->is_banned ? 'Utilisateur suspendu.' : 'Utilisateur réactivé.';
 
         return back()->with('success', $msg);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
+    /**
+     * @param  list<string>|null  $only  Clés Inertia à calculer (rechargement partiel).
+     * @return array<string, mixed>
+     */
+    private function adminDashboardProps(mixed $universityId, string $university, ?array $only = null): array
+    {
+        $want = $only !== null ? array_flip($only) : null;
+        $all = $want === null;
+
+        $props = [];
+
+        if ($all || isset($want['university'])) {
+            $props['university'] = $university;
+        }
+
+        if ($all || isset($want['stats'])) {
+            $totalUsers = User::where('university_id', $universityId)->where('role', 'student')->count();
+            $totalPosts = Post::where('university_id', $universityId)->count();
+            $postsToday = Post::where('university_id', $universityId)->whereDate('created_at', today())->count();
+            $newUsersWeek = User::where('university_id', $universityId)->where('created_at', '>=', now()->subDays(7))->count();
+            $activeUsers = User::where('university_id', $universityId)->where('last_seen_at', '>=', now()->subMinutes(15))->count();
+            $props['stats'] = compact('totalUsers', 'totalPosts', 'postsToday', 'newUsersWeek', 'activeUsers');
+        }
+
+        if ($all || isset($want['postsChart'])) {
+            $props['postsChart'] = collect(range(6, 0))->map(fn ($i) => [
+                'date' => now()->subDays($i)->format('d/m'),
+                'count' => Post::where('university_id', $universityId)->whereDate('created_at', now()->subDays($i))->count(),
+            ])->values();
+        }
+
+        if ($all || isset($want['topContributors'])) {
+            $props['topContributors'] = User::where('university_id', $universityId)
+                ->withCount('posts')
+                ->where('role', 'student')
+                ->orderByDesc('posts_count')
+                ->limit(5)
+                ->get(['id', 'name', 'email', 'created_at']);
+        }
+
+        if ($all || isset($want['recentPosts'])) {
+            $props['recentPosts'] = Post::with('user:id,name,email')
+                ->where('university_id', $universityId)
+                ->latest()
+                ->limit(10)
+                ->get();
+        }
+
+        if ($all || isset($want['recentUsers'])) {
+            $props['recentUsers'] = User::where('university_id', $universityId)
+                ->latest()
+                ->limit(8)
+                ->get(['id', 'name', 'email', 'created_at', 'is_banned', 'campus_role', 'role']);
+        }
+
+        if ($all || isset($want['campusMembers'])) {
+            $props['campusMembers'] = User::where('university_id', $universityId)
+                ->where('role', '!=', 'super_admin')
+                ->orderBy('name')
+                ->limit(250)
+                ->get(['id', 'name', 'email', 'created_at', 'is_banned', 'campus_role', 'role']);
+        }
+
+        if ($all || isset($want['channels'])) {
+            $props['channels'] = Channel::where('university_id', $universityId)->orderBy('name')->get(['id', 'name', 'slug', 'created_at']);
+        }
+
+        if ($all || isset($want['libraryResources'])) {
+            $props['libraryResources'] = Resource::where('university_id', $universityId)
+                ->with('user:id,name')
+                ->latest()
+                ->limit(40)
+                ->get();
+        }
+
+        return $props;
+    }
+
     private function authorizeUniversity(User $target): void
     {
         $adminUniversityId = Auth::user()->university_id;

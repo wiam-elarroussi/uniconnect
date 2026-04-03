@@ -1,16 +1,9 @@
 // Barre d’icônes : afficher / masquer les blocs du fil (même page, préférence locale).
 
 import { Ic } from '@/Components/Dashboard/Icons';
+import { useTranslation } from 'react-i18next';
 
-const PANEL_LABELS = {
-  chrome: 'En-tête & thème',
-  stories: 'Stories',
-  filters: 'Filtres du fil',
-  feed: 'Publications',
-  sidebar: 'Panneau droit',
-};
-
-function DockBtn({ id, active, onToggle, children, title }) {
+function DockBtn({ id, active, onToggle, children, title, label }) {
   return (
     <button
       type="button"
@@ -25,7 +18,7 @@ function DockBtn({ id, active, onToggle, children, title }) {
     >
       <span className="flex items-center justify-center w-8 h-8">{children}</span>
       <span className="text-[9px] font-bold uppercase tracking-wide max-w-[4.5rem] truncate hidden sm:block">
-        {PANEL_LABELS[id]}
+        {label}
       </span>
       {active && (
         <span
@@ -76,6 +69,8 @@ function IconSidebar() {
 }
 
 export default function DashboardPanelDock({ panels, onToggle, onShowAll, onHideAll }) {
+  const { t } = useTranslation();
+
   return (
     <div
       className="glass-card rounded-2xl p-3 mb-4 d-fade-up flex flex-col sm:flex-row sm:items-center gap-3"
@@ -86,26 +81,26 @@ export default function DashboardPanelDock({ panels, onToggle, onShowAll, onHide
           className="text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
           style={{ color: 'var(--text-3)' }}
         >
-          Affichage
+          {t('dashboard.dock.display')}
         </span>
         <p className="text-[11px] hidden md:block truncate" style={{ color: 'var(--text-3)' }}>
-          Cliquez pour ouvrir ou fermer une zone · tout reste sur cette page
+          {t('dashboard.dock.hint')}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2 flex-1 justify-start sm:justify-center">
-        <DockBtn id="chrome" active={panels.chrome} onToggle={onToggle} title="Salutation, notifications, thème">
+        <DockBtn id="chrome" active={panels.chrome} onToggle={onToggle} title={t('dashboard.dock.titleChrome')} label={t('dashboard.dock.chrome')}>
           <Ic.Zap />
         </DockBtn>
-        <DockBtn id="stories" active={panels.stories} onToggle={onToggle} title="Stories">
+        <DockBtn id="stories" active={panels.stories} onToggle={onToggle} title={t('dashboard.dock.titleStories')} label={t('dashboard.dock.stories')}>
           <IconStories />
         </DockBtn>
-        <DockBtn id="filters" active={panels.filters} onToggle={onToggle} title="Filtres du fil">
+        <DockBtn id="filters" active={panels.filters} onToggle={onToggle} title={t('dashboard.dock.titleFilters')} label={t('dashboard.dock.filters')}>
           <IconFilters />
         </DockBtn>
-        <DockBtn id="feed" active={panels.feed} onToggle={onToggle} title="Composer + publications">
+        <DockBtn id="feed" active={panels.feed} onToggle={onToggle} title={t('dashboard.dock.titleFeed')} label={t('dashboard.dock.feed')}>
           <IconFeed />
         </DockBtn>
-        <DockBtn id="sidebar" active={panels.sidebar} onToggle={onToggle} title="Bibliothèque, profil, tendances…">
+        <DockBtn id="sidebar" active={panels.sidebar} onToggle={onToggle} title={t('dashboard.dock.titleSidebar')} label={t('dashboard.dock.sidebar')}>
           <IconSidebar />
         </DockBtn>
       </div>
@@ -116,7 +111,7 @@ export default function DashboardPanelDock({ panels, onToggle, onShowAll, onHide
           style={{ color: 'var(--accent-2)', border: '1px solid rgba(118,228,176,0.25)' }}
           onClick={onShowAll}
         >
-          Tout afficher
+          {t('dashboard.dock.showAll')}
         </button>
         <button
           type="button"
@@ -124,7 +119,7 @@ export default function DashboardPanelDock({ panels, onToggle, onShowAll, onHide
           style={{ color: 'var(--text-3)', border: '1px solid var(--border)' }}
           onClick={onHideAll}
         >
-          Tout masquer
+          {t('dashboard.dock.hideAll')}
         </button>
       </div>
     </div>
