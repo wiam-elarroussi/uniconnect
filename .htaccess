@@ -1,0 +1,7 @@
+# Hostinger / hébergement mutualisé : si la racine du domaine est ce dossier
+# (et non pas le sous-dossier public/), sans cela Apache peut répondre 403.
+# Idéal : dans hPanel, régler la « racine du site » sur le dossier public/ de Laravel.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
