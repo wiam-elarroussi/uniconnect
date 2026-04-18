@@ -1,0 +1,10 @@
+{
+    "name": "Hostinger",
+    "host": "92.113.28.212",
+    "protocol": "sftp",
+    "port": 65002,
+    "username": "u616498261",
+    "password": "TON_PASSWORD",
+    "remotePath": "/home/u616498261/domains",
+    "uploadOnSave": true
+  }

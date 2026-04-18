@@ -41,8 +41,19 @@ export default function ChannelsIndex({ channels = [], followedChannelIds = [] }
                                     className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                                 >
                                     <div className="min-w-0 flex-1">
-                                        <p className="font-bold text-slate-900 break-words">{c.name}</p>
+                                        <Link
+                                            href={route('channels.show', c.id)}
+                                            className="font-bold text-slate-900 break-words hover:text-blue-700 hover:underline"
+                                        >
+                                            {c.name}
+                                        </Link>
                                         <p className="text-xs text-slate-500">{followersLabel}</p>
+                                        <Link
+                                            href={route('channels.show', c.id)}
+                                            className="mt-2 inline-block text-xs font-semibold text-blue-600 hover:text-blue-700"
+                                        >
+                                            {t('pages.channels.viewPosts')}
+                                        </Link>
                                     </div>
                                     <button
                                         type="button"

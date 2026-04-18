@@ -17,4 +17,7 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// Dossier public = celui de ce fichier (public/ en local, public_html/ sur certains hébergeurs).
+$app->usePublicPath(__DIR__);
+
 $app->handleRequest(Request::capture());

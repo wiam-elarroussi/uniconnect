@@ -1,0 +1,91 @@
+================================================================================
+Hostinger — SANS réglage « racine du site » (seulement Gestionnaire de fichiers)
+================================================================================
+
+Sur ton PC, le fichier index.php existe ici :  public/index.php
+Il n’apparaît pas sur Hostinger tant que tu n’as pas uploadé TOUT le projet Laravel.
+
+--------------------------------------------------------------------------------
+ÉTAPE 1 — ZIP sur ton ordinateur
+--------------------------------------------------------------------------------
+Dans le dossier du projet (uniconnect), crée une archive ZIP qui contient TOUT
+sauf (pour alléger) :
+  - node_modules
+  - .git (optionnel)
+
+Garde obligatoirement : app, bootstrap, config, database, public, resources,
+routes, artisan, composer.json, composer.lock, package.json, vite.config.js, etc.
+
+Tu peux EXCLURE vendor du ZIP si Hostinger te permet d’exécuter « composer install »
+(SSH ou outil Composer). Sinon inclus aussi le dossier vendor (ZIP plus lourd).
+
+--------------------------------------------------------------------------------
+ÉTAPE 2 — Nettoyer public_html sur Hostinger
+--------------------------------------------------------------------------------
+Dans le Gestionnaire de fichiers, ouvre public_html.
+Supprime ou déplace ailleurs les anciens fichiers du seul build (assets, manifest,
+.htaccess à la racine s’ils ne servent plus) pour éviter le mélange.
+
+--------------------------------------------------------------------------------
+ÉTAPE 3 — Extraire le ZIP dans public_html/laravel
+--------------------------------------------------------------------------------
+1) Crée un dossier :  public_html/laravel
+2) Upload ton ZIP dans ce dossier (ou dans public_html puis déplace-le).
+3) Extrais l’archive : le contenu doit ressembler à :
+   public_html/laravel/app/
+   public_html/laravel/bootstrap/
+   public_html/laravel/public/     (contient déjà index.php, .htaccess, etc.)
+   public_html/laravel/vendor/     (si tu l’as inclus)
+   public_html/laravel/composer.json
+   ...
+
+Si après extraction tu as public_html/laravel/uniconnect/... (dossier en trop),
+déplace le CONTENU de ce sous-dossier directement dans public_html/laravel/
+
+--------------------------------------------------------------------------------
+ÉTAPE 4 — Mettre le « front » du site à la racine public_html
+--------------------------------------------------------------------------------
+Le serveur lit en général public_html comme racine du site. Il faut donc COPIER
+tout le contenu de :
+   public_html/laravel/public/
+vers :
+   public_html/
+(fichiers à la racine de public_html : index.php, .htaccess, favicon, robots,
+ dossier build/, etc.)
+
+Ne supprime pas le dossier public_html/laravel/ — il garde app, vendor, .env, etc.
+
+--------------------------------------------------------------------------------
+ÉTAPE 5 — Remplacer index.php à la racine de public_html
+--------------------------------------------------------------------------------
+Ouvre public_html/index.php (celui que tu viens de copier) et REMPLACE tout le
+fichier par le contenu du fichier :
+   deploy/index-public_html.php
+(de ce dépôt Git). Ce fichier pointe vers public_html/laravel/ et fixe le chemin « public »
+pour Vite et les assets.
+
+--------------------------------------------------------------------------------
+ÉTAPE 6 — .env
+--------------------------------------------------------------------------------
+Dans public_html/laravel/  crée le fichier .env (copie depuis .env.example).
+Remplis APP_URL, base de données, etc.
+
+--------------------------------------------------------------------------------
+ÉTAPE 7 — Composer (si vendor absent)
+--------------------------------------------------------------------------------
+Si tu n’as pas uploadé vendor/ : il faut lancer sur le serveur :
+   composer install --no-dev --optimize-autoloader
+(SSH « Terminal » Hostinger, ou outil Composer du panneau, selon ton offre.)
+
+--------------------------------------------------------------------------------
+ÉTAPE 8 — Build des assets JS/CSS (si dossier build vide)
+--------------------------------------------------------------------------------
+En local : npm run build
+Puis upload le dossier public/build/ vers public_html/build/ (même niveau que
+index.php à la racine de public_html).
+
+================================================================================
+Note : « File Manager » fait partie de hPanel Hostinger. Connecte-toi sur
+hostinger.com → Espace client → Gérer → le même endroit où tu ouvres le
+Gestionnaire de fichiers ; tu y trouves souvent aussi Domaines, Git, Bases MySQL.
+================================================================================

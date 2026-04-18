@@ -535,12 +535,12 @@ export default function AdminDashboard({
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[640px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
                       {['Auteur','Contenu','Date','Actions'].map(h => (
-                        <th key={h} className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest"
+                        <th key={h} className="px-3 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest"
                             style={{ color: 'var(--t3)' }}>{h}</th>
                       ))}
                     </tr>
@@ -549,27 +549,27 @@ export default function AdminDashboard({
                     {recentPosts.map((p, i) => (
                       <tr key={p.id} className="transition-colors hover:bg-white/[0.02]"
                           style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', animationDelay: `${i*0.04}s` }}>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2.5">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <Av name={p.user?.name} size={28} />
-                            <div>
-                              <p className="text-xs font-medium" style={{ color: 'var(--t1)' }}>{p.user?.name}</p>
-                              <p className="text-[9px] truncate max-w-[120px]" style={{ color: 'var(--t3)' }}>{p.user?.email}</p>
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium truncate" style={{ color: 'var(--t1)' }}>{p.user?.name}</p>
+                              <p className="text-[9px] truncate max-w-[10rem] sm:max-w-[140px]" style={{ color: 'var(--t3)' }}>{p.user?.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 max-w-xs">
-                          <p className="text-xs line-clamp-2" style={{ color: 'var(--t2)' }}>{p.body}</p>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-xs">
+                          <p className="text-xs line-clamp-2 break-words" style={{ color: 'var(--t2)' }}>{p.body}</p>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--t3)' }}>
                             {new Date(p.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <button
                             onClick={() => showConfirm('deletePost', p.id, `"${p.body.substring(0,40)}…"`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium danger-btn">
+                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-medium danger-btn whitespace-nowrap">
                             <Ic.Trash /> Supprimer
                           </button>
                         </td>
@@ -602,12 +602,12 @@ export default function AdminDashboard({
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[880px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
                       {['Membre','Email','Inscription','Posts','Rôle campus','Statut','Actions'].map(h => (
-                        <th key={h} className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest"
+                        <th key={h} className="px-3 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest"
                             style={{ color: 'var(--t3)' }}>{h}</th>
                       ))}
                     </tr>
@@ -619,31 +619,31 @@ export default function AdminDashboard({
                       return (
                         <tr key={u.id} className="transition-colors hover:bg-white/[0.02]"
                             style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2.5">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               <Av name={u.name} size={30} />
-                              <span className="text-xs font-medium" style={{ color: 'var(--t1)' }}>{u.name}</span>
+                              <span className="text-xs font-medium truncate" style={{ color: 'var(--t1)' }}>{u.name}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <span className="text-[10px]" style={{ color: 'var(--t2)' }}>{u.email}</span>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-[12rem]">
+                            <span className="text-[10px] break-all" style={{ color: 'var(--t2)' }}>{u.email}</span>
                           </td>
-                          <td className="px-6 py-4">
-                            <span className="text-[10px]" style={{ color: 'var(--t3)' }}>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--t3)' }}>
                               {new Date(u.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' })}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <span className="text-xs font-bold" style={{ color: 'var(--blue)' }}>{postCount}</span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <select
                               value={u.campus_role || 'student'}
                               disabled={u.role === 'super_admin'}
                               onChange={(e) => {
                                 router.patch(route('admin.users.campus-role', u.id), { campus_role: e.target.value }, { preserveScroll: true });
                               }}
-                              className="text-[10px] font-bold rounded-lg px-2 py-1.5 max-w-[140px]"
+                              className="text-[10px] font-bold rounded-lg px-2 py-1.5 max-w-[9rem] sm:max-w-[140px]"
                               style={{ background: 'rgba(99,179,237,0.08)', color: 'var(--t1)', border: '1px solid rgba(99,179,237,0.2)' }}
                             >
                               <option value="student">Étudiant·e</option>
@@ -651,16 +651,16 @@ export default function AdminDashboard({
                               <option value="staff">Personnel</option>
                             </select>
                           </td>
-                          <td className="px-6 py-4">
-                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wide`}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wide whitespace-nowrap`}
                                   style={isBanned
                                     ? { background: 'rgba(252,129,129,0.1)', color: '#fc8181', border: '1px solid rgba(252,129,129,0.2)' }
                                     : { background: 'rgba(104,211,145,0.1)', color: '#68d391', border: '1px solid rgba(104,211,145,0.2)' }}>
                               {isBanned ? '🚫 Suspendu' : '✓ Actif'}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex flex-wrap items-center gap-2">
                               <button
                                 onClick={() => showConfirm('banUser', u.id, u.name)}
                                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold ${isBanned ? 'ok-btn' : 'warn-btn'}`}>
@@ -696,12 +696,12 @@ export default function AdminDashboard({
                   </span>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[720px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
                       {['Titre', 'Catégorie', 'Filière', 'Auteur', 'Lien', 'Actions'].map((h) => (
-                        <th key={h} className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--t3)' }}>
+                        <th key={h} className="px-3 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--t3)' }}>
                           {h}
                         </th>
                       ))}
@@ -710,27 +710,27 @@ export default function AdminDashboard({
                   <tbody>
                     {libraryResources.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-xs" style={{ color: 'var(--t3)' }}>
+                        <td colSpan={6} className="px-3 sm:px-6 py-8 text-center text-xs" style={{ color: 'var(--t3)' }}>
                           Aucune ressource enregistrée.
                         </td>
                       </tr>
                     ) : (
                       libraryResources.map((r) => (
                         <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td className="px-6 py-3 text-xs font-medium" style={{ color: 'var(--t1)' }}>{r.title}</td>
-                          <td className="px-6 py-3 text-[10px]" style={{ color: 'var(--t2)' }}>{r.category}</td>
-                          <td className="px-6 py-3 text-[10px]" style={{ color: 'var(--t3)' }}>{r.filiere || '—'}</td>
-                          <td className="px-6 py-3 text-[10px]" style={{ color: 'var(--t2)' }}>{r.user?.name}</td>
-                          <td className="px-6 py-3 max-w-[140px] truncate">
+                          <td className="px-3 sm:px-6 py-3 text-xs font-medium max-w-[10rem] sm:max-w-none break-words" style={{ color: 'var(--t1)' }}>{r.title}</td>
+                          <td className="px-3 sm:px-6 py-3 text-[10px]" style={{ color: 'var(--t2)' }}>{r.category}</td>
+                          <td className="px-3 sm:px-6 py-3 text-[10px]" style={{ color: 'var(--t3)' }}>{r.filiere || '—'}</td>
+                          <td className="px-3 sm:px-6 py-3 text-[10px] truncate max-w-[8rem]" style={{ color: 'var(--t2)' }}>{r.user?.name}</td>
+                          <td className="px-3 sm:px-6 py-3 max-w-[140px] truncate">
                             <a href={r.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:underline">
                               Ouvrir
                             </a>
                           </td>
-                          <td className="px-6 py-3">
+                          <td className="px-3 sm:px-6 py-3">
                             <button
                               type="button"
                               onClick={() => showConfirm('deleteResource', r.id, r.title)}
-                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold danger-btn"
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold danger-btn whitespace-nowrap"
                             >
                               <Ic.Trash /> Supprimer
                             </button>

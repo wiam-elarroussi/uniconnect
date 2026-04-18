@@ -123,7 +123,7 @@ const BUILDER_CSS = `
     border: 1px solid var(--ab-border);
     color: var(--ab-text1);
     border-radius: 12px;
-    padding: 10px 14px;
+    padding: 10px 14px 10px 2.75rem;
     font-size: 13px;
     width: 100%;
     outline: none;
@@ -527,21 +527,28 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
           {/* Identity fields */}
           <div className="flex-1 w-full space-y-4">
             {/* Photo upload */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               {avatarPreviewUrl
-                ? <img src={avatarPreviewUrl} alt="" className="w-12 h-12 rounded-full object-cover" style={{border:'2px solid rgba(96,165,250,0.4)'}} />
+                ? <img src={avatarPreviewUrl} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" style={{border:'2px solid rgba(96,165,250,0.4)'}} />
                 : user.avatar_url
-                  ? <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" style={{border:'2px solid rgba(96,165,250,0.4)'}} />
-                  : <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{background:'rgba(96,165,250,0.1)',border:'2px dashed rgba(96,165,250,0.25)'}}>
+                  ? <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" style={{border:'2px solid rgba(96,165,250,0.4)'}} />
+                  : <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{background:'rgba(96,165,250,0.1)',border:'2px dashed rgba(96,165,250,0.25)'}}>
                       <span style={{color:'rgba(96,165,250,0.6)'}}><Ic.Camera /></span>
                     </div>
               }
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-colors" style={{color:'#60a5fa'}}>
-                  <input type="file" accept="image/*" className="hidden"
-                    onChange={e => setData('avatar', e.target.files?.[0] ?? null)} />
-                  <Ic.Camera /> {user.avatar_url || data.avatar ? t('profile.changePhoto') : t('profile.addPhoto')}
-                </label>
+              <div className="flex flex-col gap-2 min-w-0">
+                <div className="flex flex-wrap gap-2">
+                  <label className="inline-flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer transition-colors min-h-[44px] px-3 py-2 rounded-xl touch-manipulation relative" style={{color:'#60a5fa',border:'1px solid rgba(96,165,250,0.35)',background:'rgba(96,165,250,0.06)'}}>
+                    <input type="file" accept="image/*,.heic,.heif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={e => setData('avatar', e.target.files?.[0] ?? null)} />
+                    <Ic.Camera /> {t('profile.chooseFromGallery')}
+                  </label>
+                  <label className="inline-flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer transition-colors min-h-[44px] px-3 py-2 rounded-xl touch-manipulation relative sm:hidden" style={{color:'#60a5fa',border:'1px solid rgba(96,165,250,0.35)',background:'rgba(96,165,250,0.06)'}}>
+                    <input type="file" accept="image/*" capture="environment" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={e => setData('avatar', e.target.files?.[0] ?? null)} />
+                    <Ic.Camera /> {t('profile.takePhoto')}
+                  </label>
+                </div>
                 <p className="text-[10px] mt-0.5" style={{color:'var(--ab-text3)'}}>{t('profile.photoHint')}</p>
                 {data.avatar && (
                   <button type="button" onClick={() => setData('avatar', null)}
@@ -554,29 +561,29 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
 
             {/* Name */}
             <div>
-              <label className="ab-label"><Ic.User /> {t('profile.fullName')}</label>
+              <label htmlFor="name" className="ab-label">{t('profile.fullName')}</label>
               <div className="relative">
                 <input id="name" type="text" value={data.name} onChange={e => setData('name', e.target.value)}
-                  autoComplete="name" className="ab-field pl-9" />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--ab-text3)'}}><Ic.User /></span>
+                  autoComplete="name" className="ab-field" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-[1]" style={{color:'var(--ab-text3)'}}><Ic.User /></span>
               </div>
               {errors.name && <p className="text-xs mt-1" style={{color:'#fc8181'}}>⚠ {errors.name}</p>}
             </div>
 
             {/* Email */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="ab-label"><Ic.Mail /> {t('profile.institutionalEmail')}</label>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                <label htmlFor="email" className="ab-label mb-0">{t('profile.institutionalEmail')}</label>
                 {isVerified && (
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{background:'rgba(104,211,145,0.1)',color:'#68d391',border:'1px solid rgba(104,211,145,0.2)'}}>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{background:'rgba(104,211,145,0.1)',color:'#68d391',border:'1px solid rgba(104,211,145,0.2)'}}>
                     ✓ {t('profile.verified')}
                   </span>
                 )}
               </div>
               <div className="relative">
                 <input id="email" type="email" value={data.email} onChange={e => setData('email', e.target.value)}
-                  autoComplete="username" className="ab-field pl-9" />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--ab-text3)'}}><Ic.Mail /></span>
+                  autoComplete="username" className="ab-field" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-[1]" style={{color:'var(--ab-text3)'}}><Ic.Mail /></span>
               </div>
               {errors.email && <p className="text-xs mt-1" style={{color:'#fc8181'}}>⚠ {errors.email}</p>}
             </div>

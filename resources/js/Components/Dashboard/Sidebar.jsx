@@ -78,9 +78,9 @@ function ResItem({ res }) {
   return (
     <a href={res.link} target="_blank" rel="noopener noreferrer"
       className="group flex items-start gap-3 p-3 rounded-xl transition-all hover:bg-white/5"
-      style={{border:'1px solid transparent'}}
-      onMouseEnter={e => e.currentTarget.style.borderColor=col.b}
-      onMouseLeave={e => e.currentTarget.style.borderColor='transparent'}>
+      style={{ border: `1px solid var(--border)` }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = col.b; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}>
       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
            style={{background:col.bg,color:col.c,border:`1px solid ${col.b}`}}>
         <Ic.Book />
@@ -95,7 +95,7 @@ function ResItem({ res }) {
           )}
           <span className="transition-colors" style={{color:'var(--text-3)'}}><Ic.Link /></span>
         </div>
-        <h4 className="text-xs font-medium line-clamp-1 transition-colors" style={{color:'var(--text-2)'}}>{res.title}</h4>
+        <h4 className="text-xs font-semibold line-clamp-2 transition-colors break-words" style={{ color: 'var(--text-1)' }}>{res.title}</h4>
         <div className="flex items-center gap-1.5 mt-1">
           <Avatar name={res.user?.name} size="xs" />
           <span className="text-[9px]" style={{color:'var(--text-3)'}}>{res.user?.name}</span>
@@ -144,8 +144,8 @@ export function LibraryCard({ resources }) {
   });
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden noise">
-      <div className="flex items-center justify-between px-4 py-3.5" style={{borderBottom:'1px solid var(--border)'}}>
+    <div className="glass-card rounded-2xl overflow-hidden noise flex flex-col max-h-[min(70vh,32rem)] sm:max-h-none">
+      <div className="flex items-center justify-between px-4 py-3.5 shrink-0" style={{borderBottom:'1px solid var(--border)'}}>
         <h3 className="font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2" style={{color:'var(--text-2)'}}>
           <span className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'rgba(99,179,237,0.1)',color:'var(--accent-1)'}}>
             <Ic.Book />
@@ -157,7 +157,7 @@ export function LibraryCard({ resources }) {
           <Ic.Plus />
         </button>
       </div>
-      <div className="px-3 pt-3 space-y-2">
+      <div className="px-3 pt-3 space-y-2 shrink-0">
         <div className="grid grid-cols-1 gap-2">
           <input
             value={filterQ}
@@ -197,7 +197,7 @@ export function LibraryCard({ resources }) {
           </div>
         </div>
       </div>
-      <div className="p-3 space-y-1">
+      <div className="p-3 space-y-1 min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {filteredResources.length > 0
           ? filteredResources.map(r => <ResItem key={r.id} res={r} />)
           : <div className="py-8 text-center"><p className="text-xs" style={{color:'var(--text-3)'}}>{t('dashboard.sidebar.noResourcesFilter')}</p></div>

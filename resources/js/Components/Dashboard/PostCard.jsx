@@ -141,11 +141,15 @@ export default function PostCard({ p, auth, university, onDelete }) {
               <Link href={route('users.show', p.user_id)} className="font-display font-bold text-sm truncate hover:underline" style={{color:'var(--text-1)'}}>
                 {p.user?.name}
               </Link>
-              {p.channel?.name && (
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full truncate max-w-[10rem]"
-                      style={{ background: 'rgba(183,148,244,0.12)', color: 'var(--accent-2)', border: '1px solid rgba(183,148,244,0.25)' }}>
+              {p.channel?.name && (p.channel?.id || p.channel_id) && (
+                <Link
+                  href={route('channels.show', p.channel?.id ?? p.channel_id)}
+                  className="text-[9px] font-bold px-2 py-0.5 rounded-full truncate max-w-[10rem] hover:opacity-90"
+                  style={{ background: 'rgba(183,148,244,0.12)', color: 'var(--accent-2)', border: '1px solid rgba(183,148,244,0.25)' }}
+                  title={t('dashboard.postCard.openChannelFeed')}
+                >
                   {p.channel.name}
-                </span>
+                </Link>
               )}
               {isOwn && (
                 <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
@@ -443,6 +447,40 @@ export default function PostCard({ p, auth, university, onDelete }) {
             >
               <span className="text-sm font-medium">{t('dashboard.postCard.xTwitter')}</span>
               <span className="text-xs" style={{ color: 'var(--text-3)' }}>tweet</span>
+            </a>
+
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5"
+              style={{ color: 'var(--text-1)' }}
+              onClick={() => setShareOpen(false)}
+            >
+              <span className="text-sm font-medium">{t('dashboard.postCard.facebook')}</span>
+              <span className="text-xs" style={{ color: 'var(--text-3)' }}>fb</span>
+            </a>
+
+            <a
+              href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(t('dashboard.postCard.shareTitle'))}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5"
+              style={{ color: 'var(--text-1)' }}
+              onClick={() => setShareOpen(false)}
+            >
+              <span className="text-sm font-medium">{t('dashboard.postCard.telegram')}</span>
+              <span className="text-xs" style={{ color: 'var(--text-3)' }}>t.me</span>
+            </a>
+
+            <a
+              href={`fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5"
+              style={{ color: 'var(--text-1)' }}
+              onClick={() => setShareOpen(false)}
+            >
+              <span className="text-sm font-medium">{t('dashboard.postCard.messenger')}</span>
+              <span className="text-xs" style={{ color: 'var(--text-3)' }}>{t('dashboard.postCard.messengerHint')}</span>
             </a>
           </div>
         </div>

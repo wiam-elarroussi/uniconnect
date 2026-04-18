@@ -32,7 +32,7 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
   };
 
   const handle = (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if ((!body.trim() && !media) || isFocusMode) return;
     onSubmit(body, media, channelId ? Number(channelId) : null, () => {
       setBody('');
@@ -99,21 +99,50 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
                 </select>
               </div>
             )}
+            {!isFocusMode && (
+              <div className="flex sm:hidden items-center justify-between gap-2 mt-3 pt-3 border-t touch-manipulation" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <label className="p-3 rounded-xl transition-all hover:bg-white/5 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center" style={{ color: 'var(--text-3)' }} title={t('dashboard.composer.mediaTitle')}>
+                    <Ic.Image />
+                    <input
+                      type="file"
+                      className="sr-only"
+                      accept="image/*,.heic,.heif,video/mp4,video/webm,video/quicktime"
+                      onChange={(e) => setMedia(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  <div className="p-2 rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <EmojiPicker onPick={insertEmoji} placement="up">
+                      <Ic.Smile />
+                    </EmojiPicker>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handle}
+                  disabled={processing || (!body.trim() && !media)}
+                  className="btn-neon flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-full text-xs font-display font-bold text-white shrink-0"
+                >
+                  {processing ? <Ic.Spin /> : <Ic.Send />}
+                  {t('dashboard.composer.publish')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {(focused || body.length > 0 || media) && (
           <>
-            <div className="h-px my-3.5" style={{background:'var(--border)'}} />
-            <div className="flex items-center justify-between">
+            <div className="hidden sm:block h-px my-3.5" style={{background:'var(--border)'}} />
+            <div className="hidden sm:flex flex-wrap items-center justify-between gap-y-3">
               {/* Left tools */}
-              <div className="flex items-center gap-1">
-                <label className="p-2 rounded-xl transition-all hover:bg-white/5 cursor-pointer" style={{color:'var(--text-3)'}} title={t('dashboard.composer.mediaTitle')}>
+              <div className="flex items-center gap-1 flex-wrap min-w-0">
+                <label className="p-2 rounded-xl transition-all hover:bg-white/5 cursor-pointer touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0" style={{color:'var(--text-3)'}} title={t('dashboard.composer.mediaTitle')}>
                   <Ic.Image />
                   <input
                     type="file"
-                    className="hidden"
-                    accept="image/*,video/mp4,video/webm,video/quicktime"
+                    className="sr-only"
+                    accept="image/*,.heic,.heif,video/mp4,video/webm,video/quicktime"
                     onChange={(e) => setMedia(e.target.files?.[0] || null)}
                   />
                 </label>
@@ -132,14 +161,14 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
               </div>
 
               {/* Right: counter + publish */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 {media && (
-                  <span className="text-[10px]" style={{ color: 'var(--text-3)' }}>
+                  <span className="text-[10px] max-w-[6rem] sm:max-w-[10rem] truncate" style={{ color: 'var(--text-3)' }}>
                     {media.name}
                   </span>
                 )}
                 {body.length > MAX*0.7 && (
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 -rotate-90">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 -rotate-90 shrink-0">
                     <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5"/>
                     <circle cx="12" cy="12" r="9" fill="none"
                       stroke={body.length > MAX*0.9 ? '#fc8181' : 'var(--accent-1)'}
@@ -150,9 +179,9 @@ export default function Composer({ auth, isFocusMode, onSubmit, processing, erro
                     />
                   </svg>
                 )}
-                <button onClick={handle}
+                <button type="button" onClick={handle}
                   disabled={processing || (!body.trim() && !media) || isFocusMode}
-                  className="btn-neon flex items-center gap-2 px-5 py-2 rounded-full text-xs font-display font-bold text-white">
+                  className="btn-neon flex items-center gap-2 px-4 sm:px-5 py-2 min-h-[44px] rounded-full text-xs font-display font-bold text-white touch-manipulation">
                   {processing ? <Ic.Spin /> : <Ic.Send />}
                   {t('dashboard.composer.publish')}
                 </button>

@@ -21,9 +21,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Vite::prefetch(concurrency: 3);
+        // Préfetch Vite = gros script inline : peut être bloqué par CSP / cache (page blanche sur certains hébergeurs).
+        if ($this->app->environment('local')) {
+            Vite::prefetch(concurrency: 3);
+        }
 
-        if (str_starts_with((string) config('app.url'), 'https://')) {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        } elseif (str_starts_with((string) config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
     }

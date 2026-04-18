@@ -35,13 +35,17 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+/*
+ * Lien signé dans l’e-mail : ne doit PAS exiger auth (ouverture autre navigateur, appli mail, session expirée).
+ * La sécurité repose sur signature + hash email (voir VerifyEmailController).
+ */
+Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
-
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')

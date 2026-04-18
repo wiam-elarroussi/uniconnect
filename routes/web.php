@@ -108,6 +108,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chat/message', [ChatController::class, 'message'])->name('chat.message');
 
     Route::get('/canaux', [CampusChannelsController::class, 'index'])->name('channels.index');
+    Route::get('/canaux/{channel}', [CampusChannelsController::class, 'show'])->name('channels.show');
     Route::post('/canaux/{channel}/follow', [CampusChannelsController::class, 'toggleFollow'])->name('channels.follow.toggle');
 });
 

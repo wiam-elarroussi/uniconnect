@@ -33,7 +33,8 @@
         <!-- Scripts Inertia + Vite -->
         @routes
         @viteReactRefresh
-        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+        {{-- Une seule entrée : les pages sont chargées via import.meta.glob dans app.jsx (évite double chargement en prod). --}}
+        @vite(['resources/js/app.jsx'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased bg-slate-50 {{ $isRtl ? 'font-arabic' : '' }}">
