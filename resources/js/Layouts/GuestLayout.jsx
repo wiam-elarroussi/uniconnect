@@ -1,186 +1,152 @@
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
-import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+export const GuestThemeContext = createContext(false);
 
 export default function GuestLayout({ children }) {
     const { t } = useTranslation();
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+    const features = [
+        { icon: '\u{1F4F0}', text: t('guest.features.feed') },
+        { icon: '\u{1F4AC}', text: t('guest.features.messages') },
+        { icon: '\u{1F4E1}', text: t('guest.features.channels') },
+        { icon: '\u{1F4DA}', text: t('guest.features.library') },
+        { icon: '\u{1F30D}', text: t('guest.features.interface') },
+    ];
+    const [isDark, setIsDark] = useState(() =>
+        typeof window !== 'undefined' &&
+        window.localStorage.getItem('uniconnect.dashboard.mood') === 'dark'
+    );
 
     useEffect(() => {
-        const handle = (e) => setMousePos({ x: e.clientX, y: e.clientY });
-        window.addEventListener('mousemove', handle);
-        return () => window.removeEventListener('mousemove', handle);
+        const onStorage = (e) => {
+            if (e.key === 'uniconnect.dashboard.mood') setIsDark(e.newValue === 'dark');
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
     }, []);
 
     return (
-        <div className="relative min-h-screen bg-slate-50 flex items-center justify-center px-4 overflow-hidden">
-            <div className="absolute top-4 end-4 z-20">
-                <LanguageSwitcher variant="compact" />
+        <div className="min-h-screen flex">
+
+            {/* Left branding panel — desktop only */}
+            <div className="hidden lg:flex lg:w-[46%] xl:w-[42%] flex-col justify-between p-10 relative overflow-hidden"
+                 style={{ background: 'linear-gradient(145deg, #0b1437 0%, #0f2060 40%, #0a1a4a 100%)' }}>
+
+                {/* Grid overlay */}
+                <div className="absolute inset-0 pointer-events-none"
+                     style={{
+                         backgroundImage: 'linear-gradient(rgba(99,179,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(99,179,237,0.04) 1px, transparent 1px)',
+                         backgroundSize: '40px 40px'
+                     }} />
+
+                {/* Decorative blobs */}
+                <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full pointer-events-none"
+                     style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%)' }} />
+                <div className="absolute bottom-20 right-0 w-56 h-56 rounded-full pointer-events-none"
+                     style={{ background: 'radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%)' }} />
+
+                {/* Logo */}
+                <div className="relative z-10">
+                    <Link href="/" className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                            <img src="/logo_transparent.png" alt="UniConnect" className="w-full h-full object-contain p-1" />
+                        </div>
+                        <span className="text-xl font-black text-white tracking-tight">
+                            Uni<span style={{ background: 'linear-gradient(90deg,#60a5fa,#818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Connect</span>
+                        </span>
+                    </Link>
+                </div>
+
+                {/* Center content */}
+                <div className="relative z-10 space-y-8">
+                    <div>
+                        <h2 className="text-3xl xl:text-4xl font-black text-white leading-tight mb-3">
+                            {t('guest.headline1')}<br />
+                            <span style={{ background: 'linear-gradient(90deg,#60a5fa,#818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                                {t('guest.headline2')}
+                            </span>
+                        </h2>
+                        <p className="text-blue-200/70 text-sm leading-relaxed">
+                            {t('guest.subtitle')}
+                        </p>
+                    </div>
+
+                    <div className="space-y-3">
+                        {features.map(({ icon, text }) => (
+                            <div key={text} className="flex items-center gap-3">
+                                <span className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                                      style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                    {icon}
+                                </span>
+                                <span className="text-sm text-blue-100/80 font-medium">{text}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="relative z-10">
+                    <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                        <span className="text-xs text-blue-200/50 font-medium">{t('guest.footerRGPD')}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right panel */}
+            <div
+                className="flex-1 flex flex-col min-h-screen transition-colors duration-300"
+                style={{ background: isDark ? 'rgb(8,10,22)' : 'rgb(248,250,252)' }}
+            >
+                {/* Mobile header */}
+                <div className="flex items-center justify-between px-4 pt-5 pb-2 lg:px-8 lg:pt-8">
+                    <Link href="/" className="flex items-center gap-2 lg:hidden">
+                        <div className={`w-8 h-8 rounded-lg overflow-hidden border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                            <img src="/logo_transparent.png" alt="UniConnect" className="w-full h-full object-contain p-0.5" />
+                        </div>
+                        <span className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            Uni<span className={isDark ? 'text-blue-400' : 'text-blue-600'}>Connect</span>
+                        </span>
+                    </Link>
+                    <div className="ml-auto">
+                        <LanguageSwitcher variant="compact" />
+                    </div>
+                </div>
+
+                {/* Centered form area */}
+                <div className="flex-1 flex items-center justify-center px-4 py-6 sm:px-6 lg:px-10">
+                    <div className="w-full max-w-[22rem] sm:max-w-[24rem]">
+
+                        {/* Form card */}
+                        <div
+                            className="rounded-2xl border"
+                            style={isDark
+                                ? { background: 'rgba(12,16,36,0.97)', borderColor: 'rgba(255,255,255,0.08)', boxShadow: '0 4px 32px rgba(0,0,0,0.4)' }
+                                : { background: '#ffffff', borderColor: 'rgba(0,0,0,0.06)', boxShadow: '0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }
+                            }
+                        >
+                            <div className="px-6 py-7 sm:px-7">
+                                <GuestThemeContext.Provider value={isDark}>
+                                    {children}
+                                </GuestThemeContext.Provider>
+                            </div>
+                        </div>
+
+                        {/* Mini footer */}
+                        <p className={`mt-5 text-center text-[10px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                            {t('guest.copyright')}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
                 * { font-family: 'Inter', sans-serif; }
-
-                @keyframes fadeUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50%      { transform: translateY(-8px); }
-                }
-                @keyframes pulse-slow {
-                    0%, 100% { opacity: 0.35; transform: scale(1); }
-                    50%      { opacity: 0.6;  transform: scale(1.06); }
-                }
-
-                .card-appear { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
-                .logo-float  { animation: float 5s ease-in-out infinite; }
-                .blob        { animation: pulse-slow 6s ease-in-out infinite; }
-                .blob-2      { animation: pulse-slow 8s ease-in-out infinite; animation-delay: 3s; }
-
-                /* Inputs personnalisés */
-                .uni-input {
-                    width: 100%;
-                    background: #F8FAFC;
-                    border: 1.5px solid #E2E8F0;
-                    border-radius: 12px;
-                    padding: 10px 14px;
-                    font-size: 14px;
-                    color: #0F172A;
-                    outline: none;
-                    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-                }
-                .uni-input:focus {
-                    background: #fff;
-                    border-color: #93C5FD;
-                    box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
-                }
-                .uni-input::placeholder { color: #94A3B8; }
-
-                /* Bouton primaire */
-                .uni-btn {
-                    width: 100%;
-                    background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
-                    color: #fff;
-                    font-weight: 700;
-                    font-size: 14px;
-                    padding: 11px 20px;
-                    border-radius: 12px;
-                    border: none;
-                    cursor: pointer;
-                    transition: all 0.25s ease;
-                    box-shadow: 0 4px 14px rgba(37,99,235,0.30);
-                }
-                .uni-btn:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 6px 20px rgba(37,99,235,0.40);
-                }
-                .uni-btn:active { transform: translateY(0); }
-                .uni-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-                /* Labels */
-                .uni-label {
-                    display: block;
-                    font-size: 12px;
-                    font-weight: 700;
-                    color: #475569;
-                    margin-bottom: 6px;
-                    letter-spacing: 0.02em;
-                    text-transform: uppercase;
-                }
-
-                /* Checkbox */
-                .uni-checkbox {
-                    accent-color: #2563EB;
-                    width: 15px;
-                    height: 15px;
-                    border-radius: 4px;
-                }
-
-                /* Error */
-                .uni-error {
-                    color: #EF4444;
-                    font-size: 11px;
-                    font-weight: 500;
-                    margin-top: 4px;
-                }
             `}</style>
-
-            {/* ── Halo souris ── */}
-            <div
-                className="pointer-events-none fixed inset-0 z-0"
-                style={{
-                    background: `radial-gradient(600px at ${mousePos.x}px ${mousePos.y}px, rgba(37,99,235,0.08), transparent 70%)`
-                }}
-            />
-
-            {/* ── Blobs fond ── */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                <div className="blob absolute -top-32 -left-32 w-96 h-96 rounded-full"
-                     style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)' }} />
-                <div className="blob-2 absolute -bottom-32 -right-20 w-80 h-80 rounded-full"
-                     style={{ background: 'radial-gradient(circle, rgba(79,70,229,0.10) 0%, transparent 70%)' }} />
-                {/* Grille subtile */}
-                <div className="absolute inset-0 opacity-[0.025]"
-                     style={{
-                         backgroundImage: 'linear-gradient(#2563EB 1px, transparent 1px), linear-gradient(90deg, #2563EB 1px, transparent 1px)',
-                         backgroundSize: '48px 48px'
-                     }} />
-            </div>
-
-            {/* ── Contenu centré ── */}
-            <div className="relative z-10 w-full max-w-sm">
-
-                {/* Logo */}
-                <div className="flex flex-col items-center mb-7 card-appear" style={{ animationDelay: '0.05s' }}>
-                    <Link href="/" className="logo-float block mb-4">
-                        <div className="relative">
-                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 blur-lg opacity-25 scale-110" />
-                            <ApplicationLogo size="lg" showText={false} />
-                        </div>
-                    </Link>
-                    <Link href="/">
-                        <span className="text-2xl font-black tracking-tight">
-                            <span className="text-slate-900">Uni</span>
-                            <span style={{
-                                background: 'linear-gradient(135deg,#2563EB,#4F46E5)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text',
-                            }}>Connect</span>
-                        </span>
-                    </Link>
-                    <p className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                        {t('guest.tagline')}
-                    </p>
-                </div>
-
-                {/* Card formulaire */}
-                <div
-                    className="card-appear bg-white rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/60 overflow-hidden"
-                    style={{ animationDelay: '0.12s' }}
-                >
-                    {/* Barre dégradée top */}
-                    <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500" />
-
-                    <div className="px-7 py-7">
-                        {children}
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <p className="card-appear text-center text-[10px] text-slate-400 mt-6 flex items-center justify-center gap-2"
-                   style={{ animationDelay: '0.2s' }}>
-                    <span className="w-6 h-px bg-slate-200" />
-                    {t('guest.footer')}
-                    <span className="w-6 h-px bg-slate-200" />
-                </p>
-            </div>
         </div>
     );
 }

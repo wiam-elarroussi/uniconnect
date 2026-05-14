@@ -46,16 +46,34 @@ export default function WelcomeStyles() {
         background-clip: text;
         animation: shimmer 4s linear infinite;
       }
+      /* (tagline héro : styles dans HeroSection avec dark:) — laisser pour autres usages */
+      .dark .shimmer-text {
+        background: linear-gradient(90deg, #e2e8f0 10%, #38bdf8 40%, #a5b4fc 70%, #e2e8f0 90%) !important;
+        background-size: 200% auto !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        -webkit-background-clip: text !important;
+      }
       .glass {
         background: rgba(255,255,255,0.85);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
+      }
+      .dark .glass {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.4);
       }
       .hero-grid {
         background-image:
           linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
           linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
         background-size: 48px 48px;
+      }
+      .dark .hero-grid {
+        background-image:
+          linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
       }
       .btn-primary {
         background: linear-gradient(135deg, #2563EB, #4F46E5);

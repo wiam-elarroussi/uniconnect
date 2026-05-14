@@ -1,9 +1,43 @@
 // resources/js/Components/Dashboard/Avatar.jsx
-// Avec previewOnHover : la zone profil ne montre que la photo (ou initiales si pas de photo) —
-// l’avatar vectoriel n’apparaît que dans l’aperçu au survol / toucher, puis disparaît.
 import CharacterAvatar, { mergeCharacterBuilder } from './CharacterAvatar';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createAvatar } from '@dicebear/core';
+import { avataaars } from '@dicebear/collection';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+// ── DiceBear avatar generation ──────────────────────────────────────────────
+const BG_PALETTE = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffdfbf', 'ffd5dc', 'e8d5f5', 'c8f7e4'];
+
+function generateDicebearDataUri(seed, extraOpts = {}) {
+    try {
+        const avatar = createAvatar(avataaars, {
+            seed: String(seed || 'uniconnect').toLowerCase().trim(),
+            backgroundColor: BG_PALETTE,
+            backgroundType: ['gradientLinear', 'solid'],
+            radius: 50,
+            ...extraOpts,
+        });
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(avatar.toString())}`;
+    } catch {
+        return null;
+    }
+}
+
+function DicebearAvatar({ name, sizePx, className = '', extraOpts = {} }) {
+    const uri = useMemo(() => generateDicebearDataUri(name, extraOpts), [name, JSON.stringify(extraOpts)]);
+    if (!uri) return null;
+    return (
+        <img
+            src={uri}
+            alt=""
+            width={sizePx}
+            height={sizePx}
+            className={`rounded-full object-cover select-none ${className}`}
+            style={{ width: sizePx, height: sizePx }}
+            draggable={false}
+        />
+    );
+}
 
 export default function Avatar({
     name,
@@ -15,7 +49,6 @@ export default function Avatar({
     builder = null,
     previewOnHover = false,
     previewLabel = null,
-    /** Après un tap tactile, l’aperçu reste visible encore ce délai (ms), puis se ferme. */
     touchPreviewDismissMs = 2000,
 }) {
     const [imgError, setImgError] = useState(false);
@@ -46,88 +79,103 @@ export default function Avatar({
     const hue = name ? ((name.charCodeAt(0) * 47 + (name.charCodeAt(1) || 0) * 19) % 360) : 220;
     const hue2 = (hue + 60) % 360;
     const showImg = src && !imgError;
-    const mergedBuilder = mergeCharacterBuilder(builder);
+
+    // builder.type === 'dicebear' → user picked a DiceBear avatar from the grid
+    // builder has other keys (faceShape, skin…) → legacy CharacterAvatar
+    // builder is empty / null → automatic DiceBear from name
+    const isDicebearPick = Boolean(builder && builder.type === 'dicebear' && builder.seed);
+    const isLegacyCharacter = Boolean(
+        builder && typeof builder === 'object' && Object.keys(builder).length > 0 && builder.type !== 'dicebear'
+    );
+    const mergedBuilder = isLegacyCharacter ? mergeCharacterBuilder(builder) : null;
+
+    // Effective DiceBear seed: custom pick or fallback to name
+    const dicebearSeed = isDicebearPick ? builder.seed : (name || 'uniconnect');
+
+    // Extra DiceBear options stored in builder (skin, hair, etc.)
+    const dicebearExtraOpts = isDicebearPick ? (() => {
+        const { type, seed, ...rest } = builder;
+        return rest;
+    })() : {};
 
     useLayoutEffect(() => {
-        if (!previewOnHover || !hover || !wrapRef.current) {
-            return;
-        }
+        if (!previewOnHover || !wrapRef.current) return;
+        if (!hover) { setTip({ top: 0, left: 0 }); return; }
         const r = wrapRef.current.getBoundingClientRect();
-        setTip({
-            top: r.bottom + 8,
-            left: r.left + r.width / 2,
-        });
-    }, [previewOnHover, hover, px, showImg]);
+        const left = r.left + r.width / 2;
+        const top = r.bottom + 8;
+        setTip({ top, left });
+    }, [previewOnHover, hover, px]);
 
-    const inner = showImg ? (
-        <img
-            src={src}
-            alt=""
-            className="w-full h-full rounded-full object-cover"
-            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-            onError={() => setImgError(true)}
-        />
-    ) : null;
-
-    const vectorAvatar = (sizeVal) => <CharacterAvatar builder={mergedBuilder} sizePx={sizeVal} />;
-
-    /** Sans photo : initiales dans le cercle (pas l’avatar vectoriel) lorsque previewOnHover */
-    const initialsOnly = (sizeVal) => (
-        <div
-            className="w-full h-full rounded-full flex items-center justify-center font-bold text-white select-none"
-            style={{
-                background: `linear-gradient(135deg,hsl(${hue},65%,45%),hsl(${hue2},60%,40%))`,
-                fontSize: sizeVal * 0.38,
-                fontFamily: 'Syne, system-ui, sans-serif',
-                border: '1px solid rgba(255,255,255,0.1)',
-            }}
-        >
-            {initial}
-        </div>
-    );
-
-    /**
-     * Contenu du cercle : jamais photo + avatar mélangés.
-     * - previewOnHover + photo → uniquement la photo.
-     * - previewOnHover + pas de photo → initiales (l’avatar vectoriel est dans l’aperçu).
-     * - sinon → photo ou avatar vectoriel classique.
-     */
+    // ── What to show inside the circle ─────────────────────────────────────
     const circleContent = (sizeVal) => {
+        // 1. Real photo
         if (showImg) {
-            return inner;
+            return (
+                <img
+                    src={src}
+                    alt=""
+                    className="w-full h-full rounded-full object-cover"
+                    style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                    onError={() => setImgError(true)}
+                />
+            );
         }
-        if (previewOnHover) {
-            return initialsOnly(sizeVal);
+
+        // 2. Legacy CharacterAvatar (old users who customized before)
+        if (isLegacyCharacter) {
+            if (previewOnHover) {
+                return (
+                    <div
+                        className="w-full h-full rounded-full flex items-center justify-center font-bold text-white select-none"
+                        style={{
+                            background: `linear-gradient(135deg,hsl(${hue},65%,45%),hsl(${hue2},60%,40%))`,
+                            fontSize: sizeVal * 0.38,
+                        }}
+                    >
+                        {initial}
+                    </div>
+                );
+            }
+            return <CharacterAvatar builder={mergedBuilder} sizePx={sizeVal} />;
         }
-        return vectorAvatar(sizeVal);
+
+        // 3. DiceBear (chosen from picker or automatic from name)
+        return <DicebearAvatar name={dicebearSeed} sizePx={sizeVal} className="w-full h-full" extraOpts={dicebearExtraOpts} />;
     };
 
-    const previewSize = 112;
+    // ── Hover preview ───────────────────────────────────────────────────────
+    // Always show the DiceBear avatar on hover (even when photo is main display).
+    const previewSize = 120;
+    const previewContent = isLegacyCharacter
+        ? <CharacterAvatar builder={mergedBuilder} sizePx={previewSize} animated winkOnHover={hover} />
+        : <DicebearAvatar name={dicebearSeed} sizePx={previewSize} extraOpts={dicebearExtraOpts} />;
 
     const hoverPortal =
         previewOnHover &&
         hover &&
+        tip.top > 0 &&
         typeof document !== 'undefined' &&
         createPortal(
             <div
-                className="pointer-events-none fixed z-[9998] flex flex-col items-center gap-1 rounded-2xl border px-3 py-2 shadow-2xl"
+                className="pointer-events-none flex flex-col items-center gap-1.5 rounded-2xl border px-3 py-2.5 shadow-2xl"
                 style={{
+                    position: 'fixed',
                     top: tip.top,
                     left: tip.left,
                     transform: 'translateX(-50%)',
+                    zIndex: 99999,
                     background: 'var(--panel-bg, rgba(15,23,42,0.96))',
                     borderColor: 'var(--border, rgba(255,255,255,0.12))',
                     maxWidth: 200,
                 }}
             >
-                <CharacterAvatar
-                    builder={mergedBuilder}
-                    sizePx={previewSize}
-                    animated
-                    winkOnHover={hover}
-                />
+                {previewContent}
                 {previewLabel && (
-                    <span className="text-[11px] font-bold text-center truncate max-w-[180px]" style={{ color: 'var(--text-1, #f0f4ff)' }}>
+                    <span
+                        className="text-[11px] font-bold text-center truncate max-w-[180px]"
+                        style={{ color: 'var(--text-1, #f0f4ff)' }}
+                    >
                         {previewLabel}
                     </span>
                 )}
@@ -158,7 +206,9 @@ export default function Avatar({
                     </div>
                 </div>
             ) : (
-                circleContent(px)
+                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                    {circleContent(px)}
+                </div>
             )}
 
             {online && (
@@ -185,32 +235,20 @@ export default function Avatar({
                     className="relative inline-flex flex-shrink-0 touch-manipulation"
                     style={{ width: px, height: px, touchAction: 'manipulation' }}
                     onPointerEnter={(e) => {
-                        if (e.pointerType === 'mouse') {
-                            clearTouchHideTimer();
-                            setHover(true);
-                        }
+                        if (e.pointerType === 'mouse') { clearTouchHideTimer(); setHover(true); }
                     }}
                     onPointerLeave={(e) => {
-                        if (e.pointerType === 'mouse') {
-                            clearTouchHideTimer();
-                            setHover(false);
-                        }
+                        if (e.pointerType === 'mouse') { clearTouchHideTimer(); setHover(false); }
                     }}
                     onPointerDown={(e) => {
                         if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-                            clearTouchHideTimer();
-                            setHover(true);
+                            clearTouchHideTimer(); setHover(true);
                         }
                     }}
                     onPointerUp={(e) => {
-                        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-                            scheduleTouchHide();
-                        }
+                        if (e.pointerType === 'touch' || e.pointerType === 'pen') scheduleTouchHide();
                     }}
-                    onPointerCancel={() => {
-                        clearTouchHideTimer();
-                        setHover(false);
-                    }}
+                    onPointerCancel={() => { clearTouchHideTimer(); setHover(false); }}
                 >
                     {core}
                 </div>

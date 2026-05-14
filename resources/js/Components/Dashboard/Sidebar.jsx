@@ -12,7 +12,7 @@ export function ProfileCard({ auth, posts, resources, myPostsCount }) {
     ? myPostsCount
     : posts.filter(p => p.user_id === auth.user.id).length;
   const myRes   = resources.filter(r => r.user_id === auth.user.id).length;
-  const karma   = Number(auth.user.karma) || 0;
+  const contributions = myPosts + myRes;
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden noise">
@@ -49,7 +49,7 @@ export function ProfileCard({ auth, posts, resources, myPostsCount }) {
           {[
             { label: t('dashboard.sidebar.posts'),     val: myPosts, color:'var(--accent-1)' },
             { label: t('dashboard.sidebar.resources'), val: myRes,   color:'var(--accent-2)' },
-            { label: t('dashboard.sidebar.karma'),     val: karma,   color:'var(--accent-3)' },
+            { label: t('dashboard.sidebar.contributions', { defaultValue: 'Contribution' }), val: contributions, color:'var(--accent-3)' },
           ].map(({ label, val, color }) => (
             <div key={label} className="text-center py-2 rounded-xl" style={{background:'rgba(255,255,255,0.02)'}}>
               <p className="font-display font-bold text-base" style={{color}}>{val}</p>
@@ -206,9 +206,9 @@ export function LibraryCard({ resources }) {
 
       {open && (
         <div
-        className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+        className="w-full max-w-[min(28rem,calc(100vw-1rem))] rounded-2xl overflow-hidden shadow-2xl"
         style={{
-          background: '#1a202c', // Couleur de secours (gris foncé)
+          background: '#1a202c',
           border: '1px solid rgba(255,255,255,0.1)',
           maxHeight: 'calc(100vh - 3rem)',
           position: 'relative',
@@ -216,7 +216,7 @@ export function LibraryCard({ resources }) {
         }}
       >
           <div
-            className="w-full max-w-md rounded-2xl overflow-hidden noise"
+            className="w-full max-w-[min(28rem,calc(100vw-1rem))] rounded-2xl overflow-hidden noise"
             style={{
               background: 'var(--panel-bg)',
               border: '1px solid var(--border)',

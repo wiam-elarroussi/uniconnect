@@ -1,7 +1,7 @@
 // resources/js/Pages/Admin/Dashboard.jsx
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 // ── Icônes ──────────────────────────────────────────────────────────────────
 const Ic = {
@@ -226,6 +226,35 @@ function ConfirmModal({ show, title, message, onConfirm, onCancel, danger = true
   );
 }
 
+function DetailModal({ show, title, rows = [], imageUrl = null, onClose }) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}>
+      <div className="glass noise a-up w-full max-w-lg rounded-2xl flex flex-col" style={{ maxHeight: '85vh' }}>
+        <div className="flex items-center justify-between border-b px-5 py-3 flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+          <h3 className="font-display text-sm font-bold" style={{ color: 'var(--t1)' }}>{title}</h3>
+          <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-xs" style={{ color: 'var(--t2)', border: '1px solid var(--border)' }}>
+            Fermer
+          </button>
+        </div>
+        <div className="space-y-3 overflow-y-auto px-5 py-4 flex-1">
+          {imageUrl && (
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+              <img src={imageUrl} alt="Média" className="w-full object-contain max-h-72" />
+            </div>
+          )}
+          {rows.map((r) => (
+            <div key={r.label} className="rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--t3)' }}>{r.label}</p>
+              <p className="whitespace-pre-wrap break-words text-xs" style={{ color: 'var(--t1)' }}>{r.value || '—'}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function AdminDashboard({
   university,
@@ -234,21 +263,58 @@ export default function AdminDashboard({
   topContributors,
   recentPosts,
   recentUsers,
+  recentComments = [],
   campusMembers = [],
   channels = [],
   libraryResources = [],
 }) {
   const { auth } = usePage().props;
   const [tab, setTab] = useState('overview');
-  const [confirm, setConfirm] = useState(null); // { type, id, label }
+  const [confirm, setConfirm] = useState(null);
   const [flash, setFlash] = useState(null);
+  const [detailModal, setDetailModal] = useState(null);
+  const [userSearch, setUserSearch] = useState('');
+  const [userStatusFilter, setUserStatusFilter] = useState('all'); // 'all' | 'active' | 'banned'
+  const [postSearch, setPostSearch] = useState('');
+  const [commentSearch, setCommentSearch] = useState('');
 
-  const channelForm = useForm({ name: '' });
+  const filteredMembers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    return campusMembers.filter(u => {
+      if (userStatusFilter === 'active' && u.is_banned) return false;
+      if (userStatusFilter === 'banned' && !u.is_banned) return false;
+      if (!q) return true;
+      return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    });
+  }, [campusMembers, userSearch, userStatusFilter]);
+
+  const filteredPosts = useMemo(() => {
+    const q = postSearch.trim().toLowerCase();
+    if (!q) return recentPosts;
+    return recentPosts.filter(p =>
+      (p.user?.name || '').toLowerCase().includes(q) ||
+      (p.user?.email || '').toLowerCase().includes(q) ||
+      (p.body || '').toLowerCase().includes(q)
+    );
+  }, [recentPosts, postSearch]);
+
+  const filteredComments = useMemo(() => {
+    const q = commentSearch.trim().toLowerCase();
+    if (!q) return recentComments;
+    return recentComments.filter(c =>
+      (c.user?.name || '').toLowerCase().includes(q) ||
+      (c.body || '').toLowerCase().includes(q)
+    );
+  }, [recentComments, commentSearch]);
+
+  const [channelAvatarPreview, setChannelAvatarPreview] = useState(null);
+  const channelForm = useForm({ name: '', description: '', avatar: null });
   const submitChannel = (e) => {
     e.preventDefault();
     channelForm.post(route('admin.channels.store'), {
       preserveScroll: true,
-      onSuccess: () => channelForm.reset('name'),
+      forceFormData: true,
+      onSuccess: () => { channelForm.reset('name', 'description', 'avatar'); setChannelAvatarPreview(null); },
     });
   };
 
@@ -257,65 +323,71 @@ export default function AdminDashboard({
   const executeAction = () => {
     if (!confirm) return;
     const { type, id } = confirm;
-    if (type === 'deleteChannel') {
-      router.delete(route('admin.channels.destroy', id), {
+
+    const showOk  = (msg) => { setFlash({ msg, type: 'ok'  }); setConfirm(null); setTimeout(() => setFlash(null), 4000); };
+    const showErr = (msg) => { setFlash({ msg, type: 'err' }); setConfirm(null); setTimeout(() => setFlash(null), 6000); };
+
+    const del = (routeName, routeParam, successMsg, errMsg) =>
+      router.delete(route(routeName, routeParam), {
         preserveScroll: true,
-        onSuccess: () => { setFlash('Canal supprimé.'); setConfirm(null); setTimeout(() => setFlash(null), 3000); },
+        onSuccess: () => showOk(successMsg),
+        onError:   () => showErr(errMsg),
       });
-      return;
-    }
-    if (type === 'deleteResource') {
-      router.delete(route('admin.resources.destroy', id), {
-        preserveScroll: true,
-        onSuccess: () => { setFlash('Ressource supprimée.'); setConfirm(null); setTimeout(() => setFlash(null), 3000); },
-      });
-      return;
-    }
-    const routes = {
-      deletePost: route('admin.posts.delete', id),
-      deleteUser: route('admin.users.delete', id),
-      banUser:    route('admin.users.ban', id),
-    };
-    const methods = { deletePost: 'delete', deleteUser: 'delete', banUser: 'patch' };
-    const visitOpts = {
-      preserveScroll: true,
-      onSuccess: () => { setFlash('Action effectuée avec succès.'); setConfirm(null); setTimeout(() => setFlash(null), 3000); },
-    };
+
+    if (type === 'deleteChannel')  return del('admin.channels.destroy', id, 'Canal supprimé.', 'Erreur lors de la suppression du canal.');
+    if (type === 'deleteResource') return del('admin.resources.destroy', id, 'Ressource supprimée.', 'Erreur lors de la suppression.');
+    if (type === 'deleteComment')  return del('admin.comments.delete',   id, 'Commentaire supprimé.', 'Erreur lors de la suppression.');
+    if (type === 'deletePost')     return del('admin.posts.delete',      id, 'Publication supprimée.', 'Erreur lors de la suppression.');
+    if (type === 'deleteUser')     return del('admin.users.delete',      id, 'Compte supprimé (RGPD).', 'Impossible de supprimer : compte admin ou université différente.');
+
     if (type === 'banUser') {
-      visitOpts.only = ['campusMembers', 'recentUsers'];
+      router.patch(route('admin.users.ban', id), {}, {
+        preserveScroll: true,
+        only: ['campusMembers', 'recentUsers'],
+        onSuccess: () => showOk('Statut utilisateur mis à jour.'),
+        onError:   () => showErr('Erreur lors de la suspension.'),
+      });
     }
-    router[methods[type]](routes[type], visitOpts);
   };
 
   const TABS = [
     { id: 'overview',  label: 'Vue d\'ensemble', icon: <Ic.Grid />   },
-    { id: 'posts',     label: 'Publications',    icon: <Ic.Post />   },
-    { id: 'users',     label: 'Utilisateurs',    icon: <Ic.Users />  },
+    { id: 'posts',     label: 'Publications',    icon: <Ic.Post />,  badge: recentPosts.length },
+    { id: 'comments',  label: 'Commentaires',    icon: <Ic.Alert />, badge: recentComments.length },
+    { id: 'users',     label: 'Utilisateurs',    icon: <Ic.Users />, badge: campusMembers.filter(u => u.is_banned).length || null },
     { id: 'library',   label: 'Bibliothèque',    icon: <Ic.Book />   },
+    { id: 'channels',  label: 'Canaux',          icon: <Ic.Bell />   },
   ];
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const fromUrl = new URLSearchParams(window.location.search).get('tab');
+    if (fromUrl && TABS.some((t) => t.id === fromUrl)) {
+      setTab(fromUrl);
+    }
+  }, []);
+
+  const setTabAndSyncUrl = (nextTab) => {
+    setTab(nextTab);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', nextTab);
+    window.history.replaceState({}, '', url.toString());
+  };
+
   return (
-    <AuthenticatedLayout user={auth.user}
-      header={
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-               style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}>
-            <Ic.Shield />
-          </div>
-          <span className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>
-            Panneau Admin <span style={{ color: 'var(--blue)' }}>· {university}</span>
-          </span>
-        </div>
-      }
-    >
+    <AuthenticatedLayout layoutVariant="feed">
       <Head title={`Admin · ${university}`} />
       <style>{ADMIN_CSS}</style>
 
       {/* Flash */}
       {flash && (
-        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl a-up"
-             style={{ background: 'rgba(104,211,145,0.1)', border: '1px solid rgba(104,211,145,0.3)', color: '#68d391' }}>
-          <Ic.Check /> <span className="text-sm font-medium">{flash}</span>
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl a-up max-w-sm"
+             style={flash.type === 'err'
+               ? { background: 'rgba(252,129,129,0.1)', border: '1px solid rgba(252,129,129,0.35)', color: '#fc8181' }
+               : { background: 'rgba(104,211,145,0.1)', border: '1px solid rgba(104,211,145,0.3)', color: '#68d391' }}>
+          {flash.type === 'err' ? <Ic.Alert /> : <Ic.Check />}
+          <span className="text-sm font-medium">{flash.msg}</span>
         </div>
       )}
 
@@ -324,17 +396,30 @@ export default function AdminDashboard({
         show={!!confirm}
         title={
           confirm?.type === 'banUser'
-            ? 'Suspendre l\'utilisateur'
+            ? (confirm?.meta?.isBanned ? '✅ Réactiver l\'utilisateur' : '🚫 Suspendre l\'utilisateur')
             : confirm?.type === 'deleteChannel'
               ? 'Supprimer ce canal'
               : confirm?.type === 'deleteResource'
                 ? 'Supprimer cette ressource'
                 : 'Suppression définitive'
         }
-        message={`Cette action affectera : ${confirm?.label}`}
+        message={
+          confirm?.type === 'banUser'
+            ? confirm?.meta?.isBanned
+              ? `${confirm?.label} pourra à nouveau accéder à la plateforme.`
+              : `${confirm?.label} sera immédiatement déconnecté·e et bloqué·e.`
+            : `Cette action affectera : ${confirm?.label}`
+        }
         danger={confirm?.type !== 'banUser'}
         onConfirm={executeAction}
         onCancel={() => setConfirm(null)}
+      />
+      <DetailModal
+        show={!!detailModal}
+        title={detailModal?.title || ''}
+        rows={detailModal?.rows || []}
+        imageUrl={detailModal?.imageUrl || null}
+        onClose={() => setDetailModal(null)}
       />
 
       <div className="admin-root min-h-screen py-6 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg)' }}>
@@ -364,14 +449,21 @@ export default function AdminDashboard({
             </div>
 
             {/* Tab switcher */}
-            <div className="flex items-center gap-1 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
-              {TABS.map(({ id, label, icon }) => (
-                <button key={id} onClick={() => setTab(id)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-display font-bold transition-all"
+            <div className="flex items-center gap-1 p-1 rounded-2xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', maxWidth: '100%' }}>
+              {TABS.map(({ id, label, icon, badge }) => (
+                <button key={id} onClick={() => setTabAndSyncUrl(id)}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-display font-bold transition-all whitespace-nowrap relative"
                   style={tab === id
                     ? { background: 'rgba(99,179,237,0.12)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }
                     : { color: 'var(--t3)', border: '1px solid transparent' }}>
                   {icon} {label}
+                  {badge ? (
+                    <span className="ml-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                      style={{ background: id === 'users' ? 'rgba(252,129,129,0.15)' : 'rgba(99,179,237,0.12)',
+                               color: id === 'users' ? '#fc8181' : '#63b3ed' }}>
+                      {badge}
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -387,58 +479,6 @@ export default function AdminDashboard({
                 <StatCard icon={<Ic.Zap />}      label="Posts Today"     value={stats.postsToday}   color="cyan"   delay="0.15s" />
                 <StatCard icon={<Ic.TrendUp />}  label="Nouveaux / 7j"   value={stats.newUsersWeek} color="green"  delay="0.2s"  trend={5}  />
                 <StatCard icon={<Ic.Clock />}    label="Actifs / 15min"  value={stats.activeUsers}  color="amber"  delay="0.25s" />
-              </div>
-
-              <div className="glass rounded-2xl p-6 noise a-up mb-6" style={{ animationDelay: '0.22s' }}>
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                  <div>
-                    <h3 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Canaux campus</h3>
-                    <p className="text-[10px] mt-1" style={{ color: 'var(--t3)' }}>
-                      Les étudiants peuvent publier au nom d’un canal (ex. club, asso) depuis le fil principal.
-                    </p>
-                  </div>
-                  <form onSubmit={submitChannel} className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <input
-                      value={channelForm.data.name}
-                      onChange={(e) => channelForm.setData('name', e.target.value)}
-                      placeholder="Nom du canal"
-                      className="px-4 py-2 rounded-xl text-sm min-w-[200px]"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--t1)' }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={channelForm.processing || !channelForm.data.name?.trim()}
-                      className="neon-btn px-4 py-2 rounded-xl text-xs font-bold text-white"
-                    >
-                      {channelForm.processing ? '…' : 'Créer'}
-                    </button>
-                  </form>
-                </div>
-                {channelForm.errors.name && (
-                  <p className="text-xs font-medium mb-2" style={{ color: '#fc8181' }}>{channelForm.errors.name}</p>
-                )}
-                {channels.length === 0 ? (
-                  <p className="text-xs" style={{ color: 'var(--t3)' }}>Aucun canal pour l’instant.</p>
-                ) : (
-                  <ul className="flex flex-col gap-2">
-                    {channels.map((c) => (
-                      <li
-                        key={c.id}
-                        className="flex items-center justify-between gap-2 text-[10px] font-bold px-3 py-2 rounded-xl"
-                        style={{ background: 'rgba(99,179,237,0.08)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}
-                      >
-                        <span>{c.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => showConfirm('deleteChannel', c.id, `Canal « ${c.name} »`)}
-                          className="px-2 py-1 rounded-lg danger-btn text-[10px]"
-                        >
-                          <Ic.Trash />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
 
               <div className="grid lg:grid-cols-2 gap-5 mb-5">
@@ -458,25 +498,42 @@ export default function AdminDashboard({
 
                 {/* Top contributeurs */}
                 <div className="glass rounded-2xl p-6 noise a-in" style={{ animationDelay: '0.3s' }}>
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(246,173,85,0.1)', color: '#f6ad55' }}>
-                      <Ic.Crown />
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(246,173,85,0.1)', color: '#f6ad55' }}>
+                        <Ic.Crown />
+                      </div>
+                      <h3 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Top Contributeurs</h3>
                     </div>
-                    <h3 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Top Contributeurs</h3>
+                    <span className="text-[9px] font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(246,173,85,0.08)', color: '#f6ad55', border: '1px solid rgba(246,173,85,0.2)' }}>
+                      classé par publications
+                    </span>
                   </div>
-                  <div className="space-y-3">
+                  <p className="text-[10px] mb-5" style={{ color: 'var(--t3)' }}>
+                    Top 5 membres ayant le plus publié — total campus&nbsp;:&nbsp;
+                    <strong style={{ color: 'var(--t2)' }}>{stats.totalPosts} publications</strong>
+                  </p>
+                  <div className="space-y-4">
                     {topContributors.map((u, i) => {
                       const maxPosts = topContributors[0]?.posts_count || 1;
                       const pct = (u.posts_count / maxPosts) * 100;
                       const colors = ['#f6ad55','#63b3ed','#76e4f7','#b794f4','#68d391'];
+                      const medals = ['🥇','🥈','🥉','4.','5.'];
+                      const roleLabel = u.role === 'admin' ? ' · Admin' : u.role === 'campus_admin' ? ' · Campus Admin' : '';
                       return (
                         <div key={u.id} className="flex items-center gap-3">
-                          <span className="text-[10px] font-bold w-4 text-center" style={{ color: colors[i] }}>#{i+1}</span>
+                          <span className="text-sm w-5 text-center flex-shrink-0">{medals[i]}</span>
                           <Av name={u.name} size={28} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-medium truncate" style={{ color: 'var(--t1)' }}>{u.name}</span>
-                              <span className="text-[10px] font-bold" style={{ color: colors[i] }}>{u.posts_count}</span>
+                              <div className="min-w-0">
+                                <span className="text-xs font-medium truncate block" style={{ color: 'var(--t1)' }}>{u.name}{roleLabel && <span style={{ color: 'var(--amber)', fontSize: 9 }}>{roleLabel}</span>}</span>
+                                <span className="text-[9px] truncate block" style={{ color: 'var(--t3)' }}>{u.email}</span>
+                              </div>
+                              <div className="text-right flex-shrink-0 ml-2">
+                                <span className="text-[11px] font-bold block" style={{ color: colors[i] }}>{u.posts_count}</span>
+                                <span className="text-[8px]" style={{ color: 'var(--t3)' }}>posts</span>
+                              </div>
                             </div>
                             <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
                               <div className="h-full rounded-full bar-fill"
@@ -519,47 +576,68 @@ export default function AdminDashboard({
           {/* ══════════════════════ TAB: POSTS ════════════════════════════ */}
           {tab === 'posts' && (
             <div className="glass rounded-2xl overflow-hidden noise a-up">
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 scan" style={{ borderBottom: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 px-6 py-4 scan" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(183,148,244,0.1)', color: '#b794f4' }}>
                     <Ic.Post />
                   </div>
-                  <h2 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>
-                    Publications récentes
-                  </h2>
+                  <h2 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Publications</h2>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(183,148,244,0.1)', color: '#b794f4', border: '1px solid rgba(183,148,244,0.2)' }}>
-                    {recentPosts.length}
+                    {filteredPosts.length}{postSearch ? ` / ${recentPosts.length}` : ''}
                   </span>
                 </div>
+                <input
+                  type="search"
+                  value={postSearch}
+                  onChange={e => setPostSearch(e.target.value)}
+                  placeholder="Rechercher par auteur ou contenu…"
+                  className="w-full sm:max-w-xs px-3 py-2 rounded-xl text-xs"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--t1)' }}
+                />
               </div>
-
-              {/* Table */}
               <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
-                <table className="w-full min-w-[640px]">
+                <table className="w-full min-w-[700px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                      {['Auteur','Contenu','Date','Actions'].map(h => (
+                      {['Auteur','Contenu','Stats','Date','Actions'].map(h => (
                         <th key={h} className="px-3 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest"
                             style={{ color: 'var(--t3)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {recentPosts.map((p, i) => (
+                    {filteredPosts.length === 0 && (
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-xs" style={{ color: 'var(--t3)' }}>
+                        Aucune publication correspondante.
+                      </td></tr>
+                    )}
+                    {filteredPosts.map((p, i) => (
                       <tr key={p.id} className="transition-colors hover:bg-white/[0.02]"
                           style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', animationDelay: `${i*0.04}s` }}>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <Av name={p.user?.name} size={28} />
+                            {p.media_url ? (
+                              <img src={p.media_url} alt="" className="h-9 w-9 rounded-lg object-cover flex-shrink-0 ring-1 ring-white/10" />
+                            ) : (
+                              <div className="h-9 w-9 rounded-lg flex-shrink-0 flex items-center justify-center text-[8px] font-bold"
+                                   style={{ background: 'rgba(183,148,244,0.1)', color: '#b794f4' }}>TXT</div>
+                            )}
                             <div className="min-w-0">
                               <p className="text-xs font-medium truncate" style={{ color: 'var(--t1)' }}>{p.user?.name}</p>
-                              <p className="text-[9px] truncate max-w-[10rem] sm:max-w-[140px]" style={{ color: 'var(--t3)' }}>{p.user?.email}</p>
+                              <p className="text-[9px] truncate max-w-[9rem]" style={{ color: 'var(--t3)' }}>{p.user?.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-xs">
-                          <p className="text-xs line-clamp-2 break-words" style={{ color: 'var(--t2)' }}>{p.body}</p>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-[14rem]">
+                          <p className="text-xs line-clamp-2 break-words" style={{ color: 'var(--t2)' }}>
+                            {p.body || <span style={{ color: 'var(--t3)', fontStyle: 'italic' }}>Media uniquement</span>}
+                          </p>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px]" style={{ color: 'var(--t3)' }}>❤️ {p.likes_count ?? 0}</span>
+                            <span className="text-[10px]" style={{ color: 'var(--t3)' }}>💬 {p.comments_count ?? 0}</span>
+                          </div>
                         </td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--t3)' }}>
@@ -567,9 +645,109 @@ export default function AdminDashboard({
                           </span>
                         </td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => setDetailModal({
+                                title: `Publication #${p.id}`,
+                                imageUrl: p.media_url || null,
+                                rows: [
+                                  { label: 'Auteur', value: p.user?.name || '—' },
+                                  { label: 'Email', value: p.user?.email || '—' },
+                                  { label: 'Canal', value: p.channel?.name || 'Fil général' },
+                                  { label: 'Date de publication', value: new Date(p.created_at).toLocaleString('fr-FR') },
+                                  { label: 'Texte', value: p.body || '(média uniquement)' },
+                                  { label: '❤️ Likes reçus', value: String(p.likes_count ?? 0) },
+                                  { label: '💬 Commentaires reçus', value: String(p.comments_count ?? 0) },
+                                ],
+                              })}
+                              className="flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[10px] font-bold"
+                              style={{ color: '#63b3ed', border: '1px solid rgba(99,179,237,0.25)', background: 'rgba(99,179,237,0.08)' }}
+                            >
+                              <Ic.Eye /> Détail
+                            </button>
+                            <button
+                              onClick={() => showConfirm('deletePost', p.id, `post de ${p.user?.name}`)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold danger-btn whitespace-nowrap">
+                              <Ic.Trash /> Supprimer
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════ TAB: COMMENTS ═════════════════════════ */}
+          {tab === 'comments' && (
+            <div className="glass rounded-2xl overflow-hidden noise a-up">
+              <div className="flex flex-col gap-3 px-6 py-4 scan" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(246,173,85,0.1)', color: '#f6ad55' }}>
+                    <Ic.Alert />
+                  </div>
+                  <h2 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Commentaires récents</h2>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(246,173,85,0.1)', color: '#f6ad55', border: '1px solid rgba(246,173,85,0.2)' }}>
+                    {filteredComments.length}{commentSearch ? ` / ${recentComments.length}` : ''}
+                  </span>
+                </div>
+                <input
+                  type="search"
+                  value={commentSearch}
+                  onChange={e => setCommentSearch(e.target.value)}
+                  placeholder="Rechercher par auteur ou contenu…"
+                  className="w-full sm:max-w-xs px-3 py-2 rounded-xl text-xs"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--t1)' }}
+                />
+              </div>
+              <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[580px]">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                      {['Auteur','Commentaire','Post original','Date','Actions'].map(h => (
+                        <th key={h} className="px-3 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest"
+                            style={{ color: 'var(--t3)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredComments.length === 0 && (
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-xs" style={{ color: 'var(--t3)' }}>
+                        Aucun commentaire trouvé.
+                      </td></tr>
+                    )}
+                    {filteredComments.map((c) => (
+                      <tr key={c.id} className="transition-colors hover:bg-white/[0.02]"
+                          style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Av name={c.user?.name} size={26} />
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium truncate" style={{ color: 'var(--t1)' }}>{c.user?.name}</p>
+                              <p className="text-[9px] truncate max-w-[8rem]" style={{ color: 'var(--t3)' }}>{c.user?.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-[14rem]">
+                          <p className="text-xs line-clamp-3 break-words" style={{ color: 'var(--t2)' }}>{c.body}</p>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-[10rem]">
+                          <p className="text-[10px] line-clamp-2 break-words" style={{ color: 'var(--t3)' }}>
+                            {c.post?.body ? c.post.body.substring(0, 60) + '…' : `Post #${c.post_id}`}
+                          </p>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--t3)' }}>
+                            {new Date(c.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}
+                          </span>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <button
-                            onClick={() => showConfirm('deletePost', p.id, `"${p.body.substring(0,40)}…"`)}
-                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-medium danger-btn whitespace-nowrap">
+                            onClick={() => showConfirm('deleteComment', c.id, `commentaire de ${c.user?.name}`)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold danger-btn whitespace-nowrap">
                             <Ic.Trash /> Supprimer
                           </button>
                         </td>
@@ -585,20 +763,49 @@ export default function AdminDashboard({
           {tab === 'users' && (
             <div className="glass rounded-2xl overflow-hidden noise a-up">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 scan" style={{ borderBottom: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed' }}>
-                    <Ic.Users />
+              <div className="flex flex-col gap-3 px-6 py-4 scan" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed' }}>
+                      <Ic.Users />
+                    </div>
+                    <h2 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Gestion Utilisateurs</h2>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}>
+                      {filteredMembers.length}{(userSearch || userStatusFilter !== 'all') ? ` / ${campusMembers.length}` : ''}
+                    </span>
+                    {campusMembers.filter(u => u.is_banned).length > 0 && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(252,129,129,0.1)', color: '#fc8181', border: '1px solid rgba(252,129,129,0.2)' }}>
+                        🚫 {campusMembers.filter(u => u.is_banned).length} suspendu(s)
+                      </span>
+                    )}
                   </div>
-                  <h2 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Gestion Utilisateurs</h2>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}>
-                    {campusMembers.length}
-                  </span>
+                  <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--t3)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full a-glow" style={{ background: '#68d391' }} />
+                    RGPD — Suppression définitive
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--t3)' }}>
-                  <span className="w-1.5 h-1.5 rounded-full a-glow" style={{ background: '#68d391' }} />
-                  RGPD — Suppression définitive des données
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    type="search"
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    placeholder="Rechercher par nom ou email…"
+                    className="flex-1 min-w-[180px] sm:max-w-xs px-3 py-2 rounded-xl text-xs"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--t1)' }}
+                  />
+                  <div className="flex gap-1">
+                    {[['all','Tous'],['active','Actifs'],['banned','Suspendus']].map(([val, label]) => (
+                      <button key={val} onClick={() => setUserStatusFilter(val)}
+                        className="px-3 py-2 rounded-xl text-[10px] font-bold transition-all"
+                        style={userStatusFilter === val
+                          ? { background: val === 'banned' ? 'rgba(252,129,129,0.15)' : 'rgba(99,179,237,0.15)',
+                              color: val === 'banned' ? '#fc8181' : '#63b3ed',
+                              border: `1px solid ${val === 'banned' ? 'rgba(252,129,129,0.3)' : 'rgba(99,179,237,0.3)'}` }
+                          : { color: 'var(--t3)', border: '1px solid var(--border)' }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -613,20 +820,36 @@ export default function AdminDashboard({
                     </tr>
                   </thead>
                   <tbody>
-                    {campusMembers.map((u) => {
-                      const postCount = recentPosts.filter(p => p.user_id === u.id).length;
+                    {filteredMembers.length === 0 && (
+                      <tr><td colSpan={7} className="px-6 py-8 text-center text-xs" style={{ color: 'var(--t3)' }}>
+                        Aucun utilisateur correspondant à « {userSearch} »
+                      </td></tr>
+                    )}
+                    {filteredMembers.map((u) => {
+                      const postCount = u.posts_count ?? 0;
                       const isBanned = u.is_banned || false;
+                      const lastSeen = u.last_seen_at ? new Date(u.last_seen_at) : null;
+                      const isOnline = lastSeen && (Date.now() - lastSeen.getTime()) < 15 * 60 * 1000;
                       return (
                         <tr key={u.id} className="transition-colors hover:bg-white/[0.02]"
                             style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <Av name={u.name} size={30} />
+                              <div className="relative flex-shrink-0">
+                                <Av name={u.name} size={30} />
+                                {isOnline && (
+                                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 bg-emerald-400"
+                                        style={{ borderColor: 'var(--bg)' }} />
+                                )}
+                              </div>
                               <span className="text-xs font-medium truncate" style={{ color: 'var(--t1)' }}>{u.name}</span>
                             </div>
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 max-w-[12rem]">
                             <span className="text-[10px] break-all" style={{ color: 'var(--t2)' }}>{u.email}</span>
+                            {u.university_id === null && (
+                              <span className="block text-[9px] font-bold mt-0.5" style={{ color: '#f6ad55' }}>⚠ compte orphelin</span>
+                            )}
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--t3)' }}>
@@ -644,25 +867,53 @@ export default function AdminDashboard({
                                 router.patch(route('admin.users.campus-role', u.id), { campus_role: e.target.value }, { preserveScroll: true });
                               }}
                               className="text-[10px] font-bold rounded-lg px-2 py-1.5 max-w-[9rem] sm:max-w-[140px]"
-                              style={{ background: 'rgba(99,179,237,0.08)', color: 'var(--t1)', border: '1px solid rgba(99,179,237,0.2)' }}
+                              style={{ background: '#0d1526', color: '#e8efff', border: '1px solid rgba(99,179,237,0.35)' }}
                             >
-                              <option value="student">Étudiant·e</option>
-                              <option value="teacher">Enseignant·e</option>
-                              <option value="staff">Personnel</option>
+                              <option value="student"  style={{ background: '#0d1526', color: '#e8efff' }}>Étudiant·e</option>
+                              <option value="teacher"  style={{ background: '#0d1526', color: '#e8efff' }}>Enseignant·e</option>
+                              <option value="staff"    style={{ background: '#0d1526', color: '#e8efff' }}>Personnel</option>
                             </select>
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
-                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wide whitespace-nowrap`}
-                                  style={isBanned
-                                    ? { background: 'rgba(252,129,129,0.1)', color: '#fc8181', border: '1px solid rgba(252,129,129,0.2)' }
-                                    : { background: 'rgba(104,211,145,0.1)', color: '#68d391', border: '1px solid rgba(104,211,145,0.2)' }}>
-                              {isBanned ? '🚫 Suspendu' : '✓ Actif'}
-                            </span>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wide whitespace-nowrap w-fit"
+                                    style={isBanned
+                                      ? { background: 'rgba(252,129,129,0.1)', color: '#fc8181', border: '1px solid rgba(252,129,129,0.2)' }
+                                      : { background: 'rgba(104,211,145,0.1)', color: '#68d391', border: '1px solid rgba(104,211,145,0.2)' }}>
+                                {isBanned ? '🚫 Suspendu' : '✓ Actif'}
+                              </span>
+                              {isOnline && !isBanned && (
+                                <span className="text-[8px]" style={{ color: 'var(--t3)' }}>🟢 en ligne</span>
+                              )}
+                              {isBanned && (
+                                <span className="text-[8px]" style={{ color: 'var(--t3)' }}>accès bloqué</span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <div className="flex flex-wrap items-center gap-2">
                               <button
-                                onClick={() => showConfirm('banUser', u.id, u.name)}
+                                type="button"
+                                onClick={() =>
+                                  setDetailModal({
+                                    title: `Utilisateur #${u.id}`,
+                                    rows: [
+                                      { label: 'Nom', value: u.name },
+                                      { label: 'Email', value: u.email },
+                                      { label: 'Inscription', value: new Date(u.created_at).toLocaleString('fr-FR') },
+                                      { label: 'Dernière activité', value: lastSeen ? lastSeen.toLocaleString('fr-FR') : '—' },
+                                      { label: 'Rôle campus', value: u.campus_role || 'student' },
+                                      { label: 'Statut', value: isBanned ? '🚫 Suspendu' : '✓ Actif' },
+                                      { label: 'Publications totales', value: String(postCount) },
+                                    ],
+                                  })}
+                                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold"
+                                style={{ color: '#63b3ed', border: '1px solid rgba(99,179,237,0.25)', background: 'rgba(99,179,237,0.08)' }}
+                              >
+                                <Ic.Eye /> Détail
+                              </button>
+                              <button
+                                onClick={() => setConfirm({ type: 'banUser', id: u.id, label: u.name, meta: { isBanned } })}
                                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold ${isBanned ? 'ok-btn' : 'warn-btn'}`}>
                                 {isBanned ? <><Ic.Unban /> Réactiver</> : <><Ic.Ban /> Suspendre</>}
                               </button>
@@ -741,6 +992,152 @@ export default function AdminDashboard({
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* ══════════════════════ TAB: CHANNELS ══════════════════════════ */}
+          {tab === 'channels' && (
+            <div className="glass rounded-2xl p-6 noise a-up">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed' }}>
+                      <Ic.Bell />
+                    </div>
+                    <h2 className="font-display font-bold text-sm" style={{ color: 'var(--t1)' }}>Canaux campus</h2>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}>
+                      {channels.length}
+                    </span>
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--t3)' }}>
+                    Les étudiants peuvent publier au nom d'un canal (ex. club, asso) depuis le fil principal.
+                  </p>
+                </div>
+                <form onSubmit={submitChannel} className="flex w-full flex-col gap-3 sm:w-auto">
+                  {/* Avatar picker */}
+                  <div className="flex items-center gap-3">
+                    <label htmlFor="channel-avatar-input" className="relative cursor-pointer group flex-shrink-0">
+                      <div
+                        className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:opacity-80"
+                        style={{ background: 'rgba(99,179,237,0.12)', border: '2px dashed rgba(99,179,237,0.4)' }}
+                      >
+                        {channelAvatarPreview ? (
+                          <img src={channelAvatarPreview} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="#63b3ed" strokeWidth={1.5} className="w-6 h-6">
+                            <rect x="3" y="3" width="18" height="18" rx="4"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21,15 16,10 5,21"/>
+                          </svg>
+                        )}
+                      </div>
+                      {channelAvatarPreview && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setChannelAvatarPreview(null); channelForm.setData('avatar', null); }}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                          style={{ background: '#fc8181' }}
+                        >×</button>
+                      )}
+                    </label>
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-[160px]">
+                      <p className="text-[10px] font-semibold" style={{ color: 'var(--t3)' }}>Photo du canal</p>
+                      <label
+                        htmlFor="channel-avatar-input"
+                        className="cursor-pointer text-[10px] font-bold px-3 py-1.5 rounded-lg text-center"
+                        style={{ background: 'rgba(99,179,237,0.12)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.25)' }}
+                      >
+                        {channelAvatarPreview ? 'Changer' : 'Choisir une image'}
+                      </label>
+                    </div>
+                    <input
+                      id="channel-avatar-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        channelForm.setData('avatar', file);
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setChannelAvatarPreview(ev.target.result);
+                          reader.readAsDataURL(file);
+                        } else {
+                          setChannelAvatarPreview(null);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <input
+                    value={channelForm.data.name}
+                    onChange={(e) => channelForm.setData('name', e.target.value)}
+                    placeholder="Nom du canal"
+                    className="px-4 py-2 rounded-xl text-sm min-w-[200px]"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--t1)' }}
+                  />
+                  <textarea
+                    value={channelForm.data.description}
+                    onChange={(e) => channelForm.setData('description', e.target.value)}
+                    placeholder="Description du canal (optionnel)"
+                    rows={2}
+                    className="min-w-[200px] rounded-xl px-4 py-2 text-xs"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--t1)' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={channelForm.processing || !channelForm.data.name?.trim()}
+                    className="neon-btn px-4 py-2 rounded-xl text-xs font-bold text-white"
+                  >
+                    {channelForm.processing ? '…' : 'Créer le canal'}
+                  </button>
+                </form>
+              </div>
+              {channelForm.errors.name && (
+                <p className="text-xs font-medium mb-2" style={{ color: '#fc8181' }}>{channelForm.errors.name}</p>
+              )}
+              {channelForm.errors.description && (
+                <p className="text-xs font-medium mb-2" style={{ color: '#fc8181' }}>{channelForm.errors.description}</p>
+              )}
+              {channelForm.errors.avatar && (
+                <p className="text-xs font-medium mb-2" style={{ color: '#fc8181' }}>{channelForm.errors.avatar}</p>
+              )}
+              {channels.length === 0 ? (
+                <p className="text-xs" style={{ color: 'var(--t3)' }}>Aucun canal pour l'instant.</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {channels.map((c) => (
+                    <li
+                      key={c.id}
+                      className="flex items-center justify-between gap-2 text-[10px] font-bold px-3 py-2 rounded-xl"
+                      style={{ background: 'rgba(99,179,237,0.08)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {c.avatar_url ? (
+                          <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                        ) : (
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-[11px]">
+                            {(c.name || '?').slice(0, 1).toUpperCase()}
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate">{c.name}</p>
+                          {c.description ? (
+                            <p className="truncate text-[9px] font-medium text-white/70">{c.description}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => showConfirm('deleteChannel', c.id, `Canal « ${c.name} »`)}
+                        className="px-2 py-1 rounded-lg danger-btn text-[10px]"
+                      >
+                        <Ic.Trash />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 

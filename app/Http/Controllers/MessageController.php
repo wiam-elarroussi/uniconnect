@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -20,10 +21,30 @@ class MessageController extends Controller
         $selectedUserId = (int) $request->query('user_id');
         $selectedConversationId = (int) $request->query('conversation_id');
 
+        $visibleContactsScope = function ($q) use ($user) {
+            $q->whereHas('followers', fn ($f) => $f->where('follower_id', $user->id))
+                ->orWhereExists(function ($sub) use ($user) {
+                    $sub->select(DB::raw(1))
+                        ->from('conversations')
+                        ->whereColumn('conversations.university_id', 'users.university_id')
+                        ->where('conversations.type', 'direct')
+                        ->where(function ($m) use ($user) {
+                            $m->where(function ($a) use ($user) {
+                                $a->where('conversations.user_one_id', $user->id)
+                                    ->whereColumn('conversations.user_two_id', 'users.id');
+                            })->orWhere(function ($b) use ($user) {
+                                $b->where('conversations.user_two_id', $user->id)
+                                    ->whereColumn('conversations.user_one_id', 'users.id');
+                            });
+                        });
+                });
+        };
+
         $contacts = User::where('university_id', $user->university_id)
             ->where('id', '!=', $user->id)
+            ->where($visibleContactsScope)
             ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->get(['id', 'name', 'email', 'avatar_path', 'avatar_builder']);
 
         foreach ($contacts as $c) {
             $conv = Conversation::where('university_id', $user->university_id)
@@ -77,6 +98,7 @@ class MessageController extends Controller
             ->values();
 
         $conversation = null;
+        $selectedUser = null;
 
         if ($selectedConversationId) {
             $conversation = Conversation::where('university_id', $user->university_id)
@@ -98,6 +120,10 @@ class MessageController extends Controller
                 ]);
             }
         } elseif ($selectedUserId) {
+            $selectedUser = User::where('university_id', $user->university_id)
+                ->where('id', $selectedUserId)
+                ->first(['id', 'name', 'email', 'avatar_path', 'avatar_builder']);
+
             $conversation = Conversation::where('university_id', $user->university_id)
                 ->where('type', 'direct')
                 ->where(function ($q) use ($user, $selectedUserId) {
@@ -124,6 +150,7 @@ class MessageController extends Controller
 
         $allCampusPeers = User::where('university_id', $user->university_id)
             ->where('id', '!=', $user->id)
+            ->where($visibleContactsScope)
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
@@ -132,6 +159,7 @@ class MessageController extends Controller
             'groupConversations' => $groupConversations,
             'selectedUserId' => $selectedUserId ?: null,
             'selectedConversationId' => $selectedConversationId ?: null,
+            'selectedUser' => $selectedUser,
             'conversation' => $conversation,
             'campusPeers' => $allCampusPeers,
         ]);
@@ -143,7 +171,7 @@ class MessageController extends Controller
             'receiver_id' => ['nullable', 'exists:users,id'],
             'conversation_id' => ['nullable', 'exists:conversations,id'],
             'body' => ['nullable', 'string', 'max:5000'],
-            'media' => ['nullable', 'file', 'max:15360', 'mimes:jpeg,jpg,png,gif,webp,mp3,wav,m4a,ogg,aac'],
+            'media' => ['nullable', 'file', 'max:15360', 'mimes:jpeg,jpg,png,gif,webp,mp3,wav,m4a,ogg,aac,webm,opus,flac'],
         ]);
 
         if (empty($data['receiver_id']) && empty($data['conversation_id'])) {
@@ -176,7 +204,8 @@ class MessageController extends Controller
             $mime = (string) $file->getMimeType();
             if (str_starts_with($mime, 'image/')) {
                 $contentType = 'image';
-            } elseif (str_starts_with($mime, 'audio/')) {
+            } elseif (str_starts_with($mime, 'audio/') || $mime === 'video/webm') {
+                // video/webm is reported by PHP finfo for WebM containers even when audio-only
                 $contentType = 'audio';
             } else {
                 throw ValidationException::withMessages(['media' => 'Type de fichier non pris en charge.']);
@@ -239,11 +268,53 @@ class MessageController extends Controller
                 'message',
                 'Nouveau groupe',
                 $sender->name.' vous a ajouté au groupe « '.$data['name'].' ».',
-                ['conversation_id' => $conversation->id]
+                ['conversation_id' => $conversation->id, 'actor_id' => $sender->id]
             );
         }
 
         return redirect()->route('messages.index', ['conversation_id' => $conversation->id]);
+    }
+
+    public function destroyDirect(User $peer)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        abort_if($peer->id === $user->id, 403);
+        abort_if($peer->university_id !== $user->university_id, 403);
+
+        $conversation = Conversation::where('university_id', $user->university_id)
+            ->where('type', 'direct')
+            ->where(function ($q) use ($user, $peer) {
+                $q->where(function ($q2) use ($user, $peer) {
+                    $q2->where('user_one_id', $user->id)->where('user_two_id', $peer->id);
+                })->orWhere(function ($q2) use ($user, $peer) {
+                    $q2->where('user_one_id', $peer->id)->where('user_two_id', $user->id);
+                });
+            })
+            ->first();
+
+        if ($conversation) {
+            $conversation->messages()->delete();
+            $conversation->members()->detach();
+            $conversation->delete();
+        }
+
+        return redirect()->route('messages.index');
+    }
+
+    public function destroyGroup(Conversation $conversation)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        abort_if($conversation->university_id !== $user->university_id, 403);
+        abort_if($conversation->type !== 'group', 404);
+        abort_if(! $conversation->members()->where('user_id', $user->id)->exists(), 403);
+
+        $conversation->messages()->delete();
+        $conversation->members()->detach();
+        $conversation->delete();
+
+        return redirect()->route('messages.index');
     }
 
     private function storeDirectMessage(User $sender, int $receiverId, string $body, string $contentType, ?string $mediaPath)
@@ -307,7 +378,7 @@ class MessageController extends Controller
                 'message',
                 'Groupe : '.$conversation->title,
                 $sender->name.' a envoyé un message.',
-                ['conversation_id' => $conversation->id]
+                ['conversation_id' => $conversation->id, 'actor_id' => $sender->id]
             );
         }
 

@@ -17,7 +17,10 @@ class StoryController extends Controller
         $user = Auth::user();
 
         $stories = Story::with('user:id,name')
-            ->where('university_id', $user->university_id)
+            ->where(function ($q) use ($user) {
+                $q->where('university_id', $user->university_id)
+                  ->orWhereHas('user', fn ($q2) => $q2->where('role', 'super_admin'));
+            })
             ->where('expires_at', '>', now())
             ->latest()
             ->get();
@@ -91,16 +94,33 @@ class StoryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'media' => 'required|file|mimes:jpg,jpeg,png,webp,gif,mp4,webm,mov|max:20480',
+        $validated = $request->validate([
+            'body' => ['nullable', 'string', 'max:5000'],
+            'media' => [
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,webp,gif,mp4,webm,mov',
+                'max:20480',
+            ],
         ]);
 
         $user = Auth::user();
-        $path = $request->file('media')->store('stories', 'public');
+        $text = isset($validated['body']) ? trim($validated['body']) : '';
+        $hasFile = $request->hasFile('media');
+
+        if (! $hasFile && $text === '') {
+            return back()->withErrors(['body' => 'Ajoutez un texte ou un média.']);
+        }
+
+        $path = $hasFile ? $request->file('media')->store('stories', 'public') : null;
+        if ($text === '') {
+            $text = null;
+        }
 
         Story::create([
             'user_id' => $user->id,
             'university_id' => $user->university_id,
+            'body' => $text,
             'media_path' => $path,
             'expires_at' => now()->addHours(24),
         ]);
@@ -137,7 +157,7 @@ class StoryController extends Controller
             ['reaction' => $existing?->reaction]
         );
 
-        return back();
+        return response()->json(['ok' => true]);
     }
 
     public function react(Request $request, Story $story)
@@ -155,6 +175,6 @@ class StoryController extends Controller
             ['reaction' => $data['reaction']]
         );
 
-        return back();
+        return response()->json(['ok' => true]);
     }
 }

@@ -1,6 +1,7 @@
 import Modal from '@/Components/Modal';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const IconTrash  = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>;
 const IconShield = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
@@ -10,6 +11,7 @@ const IconSpin   = () => <svg className="animate-spin w-4 h-4" viewBox="0 0 24 2
 const IconX      = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 
 export default function DeleteUserForm({ className = '' }) {
+    const { t } = useTranslation();
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [inputFocused, setInputFocused] = useState(false);
@@ -37,10 +39,10 @@ export default function DeleteUserForm({ className = '' }) {
     };
 
     const consequences = [
-        { icon: '📝', text: 'Toutes vos publications seront supprimées' },
-        { icon: '📚', text: 'Vos ressources partagées seront retirées' },
-        { icon: '🔑', text: 'Votre accès à UniConnect sera révoqué' },
-        { icon: '✅', text: 'Droit à l\'oubli RGPD appliqué immédiatement' },
+        { icon: '📝', text: t('profile.delete.con1') },
+        { icon: '📚', text: t('profile.delete.con2') },
+        { icon: '🔑', text: t('profile.delete.con3') },
+        { icon: '✅', text: t('profile.delete.con4') },
     ];
 
     return (
@@ -52,16 +54,16 @@ export default function DeleteUserForm({ className = '' }) {
                     <span className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center text-red-500">
                         <IconTrash />
                     </span>
-                    Supprimer le compte
+                    {t('profile.delete.title')}
                 </h2>
                 <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                    Cette action est <span className="font-semibold text-slate-700">irréversible</span>. Toutes vos données seront effacées conformément au <span className="text-emerald-600 font-semibold">droit à l'oubli RGPD</span>.
+                    {t('profile.dangerBannerBody')}
                 </p>
             </div>
 
             {/* Conséquences */}
             <div className="bg-red-50 border border-red-100 rounded-2xl p-4 space-y-2.5">
-                <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-3">Ce qui sera supprimé</p>
+                <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-3">{t('profile.delete.whatDeleted')}</p>
                 {consequences.map(({ icon, text }) => (
                     <div key={text} className="flex items-center gap-2.5">
                         <span className="text-base leading-none">{icon}</span>
@@ -76,7 +78,7 @@ export default function DeleteUserForm({ className = '' }) {
                 className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white text-sm font-bold rounded-xl hover:bg-red-600 transition-all shadow-md shadow-red-100 hover:shadow-red-200 hover:-translate-y-0.5 active:translate-y-0"
             >
                 <IconTrash />
-                Supprimer mon compte
+                {t('profile.delete.deleteBtn')}
             </button>
 
             {/* ── Modal confirmation ── */}
@@ -103,15 +105,15 @@ export default function DeleteUserForm({ className = '' }) {
                             </div>
                             <div>
                                 <h2 className="text-lg font-black text-slate-900 leading-tight">
-                                    Confirmer la suppression
+                                    {t('profile.delete.confirmTitle')}
                                 </h2>
-                                <p className="text-xs text-red-500 font-semibold mt-0.5">Action irréversible · RGPD Droit à l'oubli</p>
+                                <p className="text-xs text-red-500 font-semibold mt-0.5">{t('profile.delete.confirmSubtitle')}</p>
                             </div>
                         </div>
 
                         {/* Message */}
                         <p className="text-sm text-slate-600 leading-relaxed mb-6">
-                            Vous êtes sur le point de <span className="font-bold text-slate-800">supprimer définitivement</span> votre compte UniConnect. Toutes vos données seront effacées immédiatement et ne pourront pas être récupérées.
+                            {t('profile.dangerBannerBody')}
                         </p>
 
                         {/* Résumé conséquences */}
@@ -128,7 +130,7 @@ export default function DeleteUserForm({ className = '' }) {
                             {/* Champ mot de passe */}
                             <div className="mb-5">
                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                    Confirmez avec votre mot de passe
+                                    {t('profile.delete.confirmPasswordLabel')}
                                 </label>
                                 <div
                                     className={`relative flex items-center rounded-xl border transition-all duration-200 ${
@@ -149,7 +151,7 @@ export default function DeleteUserForm({ className = '' }) {
                                         onFocus={() => setInputFocused(true)}
                                         onBlur={() => setInputFocused(false)}
                                         autoFocus
-                                        placeholder="Votre mot de passe actuel"
+                                        placeholder={t('profile.delete.confirmPasswordPlaceholder')}
                                         className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-sm text-slate-800 placeholder-slate-400"
                                     />
                                     <button
@@ -171,7 +173,7 @@ export default function DeleteUserForm({ className = '' }) {
                             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 mb-5">
                                 <span className="text-emerald-500"><IconShield /></span>
                                 <p className="text-[10px] text-emerald-700 font-semibold leading-relaxed">
-                                    Conformément au <strong>RGPD</strong>, toutes vos données seront définitivement effacées (Droit à l'oubli garanti).
+                                    {t('profile.delete.rgpdBadge')}
                                 </p>
                             </div>
 
@@ -182,7 +184,7 @@ export default function DeleteUserForm({ className = '' }) {
                                     onClick={closeModal}
                                     className="flex-1 px-5 py-2.5 bg-slate-100 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-200 transition-all"
                                 >
-                                    Annuler
+                                    {t('profile.cancel')}
                                 </button>
                                 <button
                                     type="submit"
@@ -190,7 +192,7 @@ export default function DeleteUserForm({ className = '' }) {
                                     className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500 text-white text-sm font-bold rounded-xl hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-red-100"
                                 >
                                     {processing ? <IconSpin /> : <IconTrash />}
-                                    {processing ? 'Suppression…' : 'Supprimer définitivement'}
+                                    {processing ? t('profile.delete.deleting') : t('profile.delete.confirmDeleteBtn')}
                                 </button>
                             </div>
                         </form>

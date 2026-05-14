@@ -9,15 +9,15 @@ export const CHARACTER_AVATAR_DEFAULTS = {
   // Silhouette
   bodyType: 'medium',       // slim | medium | broad
 
-  // Visage
-  faceShape: 'oval',        // oval | round | square | heart | diamond
+  // Visage (style “friendly” proche d’un avatar type Duolingo : visage rond, gros yeux, sourire)
+  faceShape: 'round',       // oval | round | square | heart | diamond
   skin: '#f5cba7',
   skinShade: 'light',       // light | medium | dark | deep
 
   // Yeux
-  eyeShape: 'almond',       // round | almond | hooded | narrow | upturned | downturned
+  eyeShape: 'round',        // round | almond | hooded | narrow | upturned | downturned
   eyeColor: '#3d2b1f',
-  eyeSize: 'medium',        // small | medium | large
+  eyeSize: 'large',         // small | medium | large
   lashStyle: 'natural',     // none | natural | full | dramatic
   browShape: 'arched',      // straight | arched | thick | thin | curved
 
@@ -38,9 +38,9 @@ export const CHARACTER_AVATAR_DEFAULTS = {
   facialHairColor: '#2c1810',
 
   // Couleurs
-  lipColor: '#c0634a',
-  blushColor: '#e8936a',
-  blushIntensity: 0.3,      // 0-1
+  lipColor: null,
+  blushColor: null,
+  blushIntensity: 0.1,      // 0-1
 
   // Détails peau
   skinDetails: 'none',      // none | freckles | mole_left | mole_right | dimples | vitiligo
@@ -130,8 +130,10 @@ function FaceShape({ shape, sp, fm, uid }) {
 
 // ── Yeux ultra-détaillés ───────────────────────────────────────────────────
 function Eye({ cx, cy, eyeColor, shape, size, lash, expression, isLeft, uid }) {
-  const s = { small: 0.8, medium: 1, large: 1.25 }[size] || 1;
-  const rx = 5.5 * s, ry = 3.8 * s;
+  const s = { small: 0.84, medium: 1, large: 1.14 }[size] || 1;
+  const isAlmond = shape === 'almond' || shape === 'upturned' || shape === 'downturned';
+  const rx = (isAlmond ? 5.1 : 4.9) * s;
+  const ry = (isAlmond ? 2.95 : 3.2) * s;
   const isWink = expression === 'wink' && isLeft;
   const isClosed = expression === 'laugh';
 
@@ -148,7 +150,7 @@ function Eye({ cx, cy, eyeColor, shape, size, lash, expression, isLeft, uid }) {
   }
 
   // Clippath de l'œil
-  const clipId = `eye-clip-${uid}-${isLeft?'L':'R'}`;
+  const clipId = `eye-clip-${uid}-${isLeft ? 'L' : 'R'}`;
 
   return (
     <g>
@@ -158,49 +160,24 @@ function Eye({ cx, cy, eyeColor, shape, size, lash, expression, isLeft, uid }) {
         </clipPath>
       </defs>
 
-      {/* Blanc de l'œil */}
+      {/* Eye white */}
       <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="white" />
-
-      {/* Iris — dégradé réaliste */}
-      <circle cx={cx} cy={cy+0.5} r={ry*0.78} fill={eyeColor} clipPath={`url(#${clipId})`} />
-      {/* Anneau limbique */}
-      <circle cx={cx} cy={cy+0.5} r={ry*0.78} fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="0.7" clipPath={`url(#${clipId})`} />
-      {/* Stries de l'iris */}
-      {[0,30,60,90,120,150].map(a => (
-        <line key={a}
-          x1={cx} y1={cy+0.5}
-          x2={cx + Math.cos(a*Math.PI/180)*(ry*0.78)}
-          y2={cy+0.5 + Math.sin(a*Math.PI/180)*(ry*0.78)}
-          stroke="rgba(255,255,255,0.08)" strokeWidth="0.4"
-          clipPath={`url(#${clipId})`} />
-      ))}
-      {/* Pupille */}
-      <circle cx={cx-0.3} cy={cy+0.3} r={ry*0.38} fill="#0a0505" clipPath={`url(#${clipId})`} />
-      {/* Reflet principal */}
-      <circle cx={cx+1.2} cy={cy-1.4} r={ry*0.22} fill="rgba(255,255,255,0.88)" clipPath={`url(#${clipId})`} />
-      {/* Reflet secondaire */}
-      <circle cx={cx-1.2} cy={cy+1.2} r={ry*0.10} fill="rgba(255,255,255,0.45)" clipPath={`url(#${clipId})`} />
-
-      {/* Ombre paupière supérieure */}
-      <path d={`M${cx-rx} ${cy} Q${cx} ${cy-ry*1.1} ${cx+rx} ${cy}`}
-        fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={ry*0.6} clipPath={`url(#${clipId})`} />
-
-      {/* Contour de l'œil */}
-      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.5" />
+      {/* Iris + pupil (slightly larger to avoid tired look) */}
+      <circle cx={cx} cy={cy + 0.12} r={ry * 0.72} fill={eyeColor} clipPath={`url(#${clipId})`} />
+      <circle cx={cx} cy={cy + 0.16} r={ry * 0.36} fill="#0f172a" clipPath={`url(#${clipId})`} />
+      {/* Soft highlight */}
+      <circle cx={cx + 0.95} cy={cy - 0.95} r={ry * 0.16} fill="rgba(255,255,255,0.9)" clipPath={`url(#${clipId})`} />
+      {/* Eye outline */}
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="rgba(15,23,42,0.13)" strokeWidth="0.45" />
 
       {/* Cils supérieurs */}
       {lash !== 'none' && (
         <path d={`M${cx-rx*1.05} ${cy} Q${cx} ${cy-ry*1.15} ${cx+rx*1.05} ${cy}`}
           fill="none" stroke="#1a0f08"
-          strokeWidth={lash === 'dramatic' ? 2.2 : lash === 'full' ? 1.7 : 1.2}
+          strokeWidth={lash === 'dramatic' ? 1.8 : lash === 'full' ? 1.45 : 1.05}
           strokeLinecap="round" />
       )}
-      {/* Cils inférieurs légers */}
-      <path d={`M${cx-rx*0.7} ${cy+ry*0.6} Q${cx} ${cy+ry*0.95} ${cx+rx*0.7} ${cy+ry*0.6}`}
-        fill="none" stroke="rgba(26,15,8,0.4)" strokeWidth="0.6" strokeLinecap="round" />
-
-      {/* Caroncule (coin interne) */}
-      <ellipse cx={isLeft ? cx+rx*0.85 : cx-rx*0.85} cy={cy+ry*0.1} rx="1.2" ry="0.8" fill="#d9956a" opacity={0.6} />
+      {/* No lower lash line: cleaner and less sleepy */}
     </g>
   );
 }
@@ -235,19 +212,19 @@ function Brows({ expression, browShape, hairColor, uid }) {
     },
   };
   const bd = browData[browShape] || browData.arched;
-  const thick = ['thick'].includes(browShape) ? 2.8 : 1.8;
+  const thick = ['thick'].includes(browShape) ? 2.2 : 1.35;
 
   return (
     <g opacity={0.88}>
       {/* Brow shadow for depth */}
-      <path d={bd.L} fill="none" stroke={col} strokeWidth={thick+0.8} strokeLinecap="round" opacity={0.15} />
-      <path d={bd.R} fill="none" stroke={col} strokeWidth={thick+0.8} strokeLinecap="round" opacity={0.15} />
+      <path d={bd.L} fill="none" stroke={col} strokeWidth={thick + 0.55} strokeLinecap="round" opacity={0.1} />
+      <path d={bd.R} fill="none" stroke={col} strokeWidth={thick + 0.55} strokeLinecap="round" opacity={0.1} />
       {/* Main brow */}
       <path d={bd.L} fill="none" stroke={col} strokeWidth={thick} strokeLinecap="round" />
       <path d={bd.R} fill="none" stroke={col} strokeWidth={thick} strokeLinecap="round" />
       {/* Highlight on brow */}
-      <path d={bd.L} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} strokeLinecap="round" />
-      <path d={bd.R} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} strokeLinecap="round" />
+      <path d={bd.L} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={0.4} strokeLinecap="round" />
+      <path d={bd.R} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={0.4} strokeLinecap="round" />
     </g>
   );
 }
@@ -255,63 +232,15 @@ function Brows({ expression, browShape, hairColor, uid }) {
 // ── Nez ultra-détaillé ────────────────────────────────────────────────────
 function Nose({ shape, sp }) {
   const s = sp.shadow;
-  const s2 = 'rgba(0,0,0,0.18)';
   switch (shape) {
     case 'none': return null;
-    case 'wide':
+    default:
       return (
         <g>
-          <path d="M46 53 Q50 58 54 53" fill="none" stroke={s} strokeWidth="1.2" strokeLinecap="round" />
-          <ellipse cx="44.5" cy="55.5" rx="3.2" ry="2" fill={s2} />
-          <ellipse cx="55.5" cy="55.5" rx="3.2" ry="2" fill={s2} />
-          <path d="M44.5 53.8 Q50 57 55.5 53.8" fill="none" stroke={s} strokeWidth="0.8" strokeLinecap="round" />
-          {/* Highlight */}
-          <ellipse cx="50" cy="51.5" rx="1.5" ry="1" fill="rgba(255,255,255,0.2)" />
-        </g>
-      );
-    case 'pointy':
-      return (
-        <g>
-          <path d="M50 49 L47 56 Q50 58.5 53 56 Z" fill={s2} opacity={0.5} />
-          <path d="M49.5 50.5 Q50 55 50.5 50.5" fill="none" stroke={s} strokeWidth="0.6" />
-          <ellipse cx="50" cy="49.5" rx="1" ry="0.6" fill="rgba(255,255,255,0.25)" />
-        </g>
-      );
-    case 'upturned':
-      return (
-        <g>
-          <path d="M46.5 56.5 Q50 52.5 53.5 56.5" fill="none" stroke={s} strokeWidth="1.1" strokeLinecap="round" />
-          <ellipse cx="46.5" cy="56" rx="2.2" ry="1.5" fill={s2} opacity={0.7} />
-          <ellipse cx="53.5" cy="56" rx="2.2" ry="1.5" fill={s2} opacity={0.7} />
-          <ellipse cx="50" cy="52" rx="1.2" ry="0.7" fill="rgba(255,255,255,0.2)" />
-        </g>
-      );
-    case 'broad':
-      return (
-        <g>
-          <path d="M44 53.5 Q50 58.5 56 53.5" fill="none" stroke={s} strokeWidth="1.3" strokeLinecap="round" />
-          <ellipse cx="44" cy="55.5" rx="3.8" ry="2.2" fill={s2} opacity={0.65} />
-          <ellipse cx="56" cy="55.5" rx="3.8" ry="2.2" fill={s2} opacity={0.65} />
-          <ellipse cx="50" cy="51" rx="2" ry="1.1" fill="rgba(255,255,255,0.18)" />
-        </g>
-      );
-    case 'narrow':
-      return (
-        <g>
-          <path d="M48 53 Q50 57 52 53" fill="none" stroke={s} strokeWidth="0.9" strokeLinecap="round" />
-          <ellipse cx="48.2" cy="54.8" rx="1.5" ry="1" fill={s2} opacity={0.55} />
-          <ellipse cx="51.8" cy="54.8" rx="1.5" ry="1" fill={s2} opacity={0.55} />
-          <ellipse cx="50" cy="51.5" rx="0.9" ry="0.55" fill="rgba(255,255,255,0.22)" />
-        </g>
-      );
-    default: // button
-      return (
-        <g>
-          <path d="M47.5 53.5 Q50 57 52.5 53.5" fill="none" stroke={s} strokeWidth="0.9" strokeLinecap="round" />
-          <ellipse cx="47.2" cy="55.2" rx="2.3" ry="1.5" fill={s2} opacity={0.6} />
-          <ellipse cx="52.8" cy="55.2" rx="2.3" ry="1.5" fill={s2} opacity={0.6} />
-          {/* Highlight on nose bridge */}
-          <ellipse cx="50" cy="50.5" rx="1.4" ry="2" fill="rgba(255,255,255,0.18)" />
+          <path d="M50 49.8 Q49.75 52.6 49.95 55.15" fill="none" stroke={s} strokeWidth="0.7" strokeLinecap="round" opacity="0.46" />
+          <path d="M48.25 55.85 Q50 56.85 51.75 55.85" fill="none" stroke={s} strokeWidth="0.7" strokeLinecap="round" opacity="0.42" />
+          <circle cx="48.45" cy="55.7" r="0.42" fill="rgba(0,0,0,0.16)" />
+          <circle cx="51.55" cy="55.7" r="0.42" fill="rgba(0,0,0,0.16)" />
         </g>
       );
   }
@@ -320,28 +249,15 @@ function Nose({ shape, sp }) {
 // ── Bouche ultra-détaillée ────────────────────────────────────────────────
 function Mouth({ expression, lipShape, lipColor, sp }) {
   const lc = lipColor || sp.lip;
-  const lc2 = lipColor ? lipColor+'cc' : sp.lip+'aa';
+  const lc2 = lipColor ? `${lipColor}cc` : `${sp.lip}aa`;
   const w = { thin: 0.8, medium: 1, full: 1.2, pouty: 1.1, wide: 1.35 }[lipShape] || 1;
-
-  const lip = (path, fill = lc, op = 1) => <path d={path} fill={fill} opacity={op} />;
 
   switch (expression) {
     case 'smile':
       return (
         <g>
-          {/* Upper lip */}
-          <path d={`M${42-w*2} 61 Q${46-w} 58.5 50 60 Q${54+w} 58.5 ${58+w*2} 61 Q${54+w} 63.5 50 63 Q${46-w} 63.5 ${42-w*2} 61 Z`} fill={lc} />
-          {/* Lower lip */}
-          <path d={`M${41-w*2} 61.5 Q50 68 ${59+w*2} 61.5 Q${54+w} 65 50 65.5 Q${46-w} 65 ${41-w*2} 61.5 Z`} fill={lc2} />
-          {/* Cupid's bow */}
-          <path d={`M${44-w} 59.5 Q48 57.5 50 59.5 Q52 57.5 ${56+w} 59.5`} fill="none" stroke={lc} strokeWidth="0.8" strokeLinecap="round" />
-          {/* Teeth */}
-          <path d={`M${43-w*1.5} 61.5 Q50 66 ${57+w*1.5} 61.5 Q50 64.5 ${43-w*1.5} 61.5 Z`} fill="rgba(255,255,255,0.9)" />
-          {/* Lip highlight */}
-          <ellipse cx="50" cy="64.2" rx={4*w} ry="1.2" fill="rgba(255,255,255,0.2)" />
-          {/* Mouth corners */}
-          <circle cx={42-w*2} cy="61" r="0.8" fill={sp.shadow} opacity={0.5} />
-          <circle cx={58+w*2} cy="61" r="0.8" fill={sp.shadow} opacity={0.5} />
+          <path d={`M${43.8 - w * 1.5} 61.15 Q50 64.2 ${56.2 + w * 1.5} 61.15`} fill="none" stroke={lc} strokeWidth="1.55" strokeLinecap="round" />
+          <path d={`M${45.6 - w * 0.9} 61.95 Q50 63.3 ${54.4 + w * 0.9} 61.95`} fill="none" stroke="rgba(255,255,255,0.27)" strokeWidth="0.62" strokeLinecap="round" />
         </g>
       );
     case 'laugh':
@@ -370,9 +286,7 @@ function Mouth({ expression, lipShape, lipColor, sp }) {
     case 'smirk':
       return (
         <g>
-          <path d={`M44 60.5 Q48 58.5 50 60 Q53 58 57 61.5 Q53 64 50 63 Q47 64 44 60.5 Z`} fill={lc} />
-          <path d={`M43.5 61 Q50 66 57.5 62`} fill={lc2} strokeWidth="0.5" />
-          <path d={`M45 60 Q48 57.5 50 59.5`} fill="none" stroke={lc} strokeWidth="0.7" />
+          <path d="M45 61.2 Q50 63.5 57 60.8" fill="none" stroke={lc} strokeWidth="1.7" strokeLinecap="round" />
         </g>
       );
     case 'sad':
@@ -407,10 +321,7 @@ function Mouth({ expression, lipShape, lipColor, sp }) {
     default: // neutral
       return (
         <g>
-          <path d={`M${44-w} 61 Q${47} 59 50 60.5 Q${53} 59 ${56+w} 61 Q${53} 63 50 62.5 Q${47} 63 ${44-w} 61 Z`} fill={lc} />
-          <path d={`M${44-w} 61.5 Q50 65 ${56+w} 61.5 Q50 64 ${44-w} 61.5 Z`} fill={lc2} opacity={0.7} />
-          <path d={`M${45-w} 59.5 Q48 57.5 50 59 Q52 57.5 ${55+w} 59.5`} fill="none" stroke={lc} strokeWidth="0.6" strokeLinecap="round" opacity={0.8} />
-          <ellipse cx="50" cy="63.5" rx={3.5*w} ry="1" fill="rgba(255,255,255,0.18)" />
+          <path d={`M${45 - w} 62 Q50 62.8 ${55 + w} 62`} fill="none" stroke={lc2} strokeWidth="1.05" strokeLinecap="round" />
         </g>
       );
   }
@@ -514,7 +425,13 @@ function HairBack({ style, color, highlight }) {
       );
     case 'bob':
       return (
-        <path d="M22 38 Q24 24 50 22 Q76 24 78 38 Q80 52 76 62 Q70 70 50 70 Q30 70 24 62 Q20 52 22 38 Z" fill={c} />
+        <g>
+          <path d="M24 38 Q28 24 50 22 Q72 24 76 38 Q78 51 73 62 Q67 70 50 70 Q33 70 27 62 Q22 51 24 38 Z" fill={c} />
+          <path d="M27 41 Q32 33 50 31 Q68 33 73 41" fill="none" stroke={hi} strokeWidth="1.6" opacity={0.2} />
+          {/* side locks to avoid helmet look */}
+          <path d="M28 46 Q24 54 25 62 Q28 66 32 64 Q31 56 33 48 Z" fill={c} opacity={0.95} />
+          <path d="M72 46 Q76 54 75 62 Q72 66 68 64 Q69 56 67 48 Z" fill={c} opacity={0.95} />
+        </g>
       );
     case 'pixie':
       return (
@@ -555,7 +472,10 @@ function HairBack({ style, color, highlight }) {
       );
     default: // medium / short
       return (
-        <path d="M26 36 Q28 22 50 20 Q72 22 74 36 Q78 50 74 64 H26 Q22 50 26 36 Z" fill={c} />
+        <g>
+          <path d="M26 35 Q30 21 50 19 Q70 21 74 35 Q77 47 73 61 H27 Q23 47 26 35 Z" fill={c} />
+          <path d="M30 39 Q36 31 50 29 Q64 31 70 39" fill="none" stroke={hi} strokeWidth="1.4" opacity={0.16} />
+        </g>
       );
   }
 }
@@ -574,7 +494,11 @@ function HairFront({ style, color, highlight }) {
       );
     case 'bob':
       return (
-        <path d="M24 40 Q50 30 76 40 Q50 36 24 40 Z" fill={c} opacity={0.85} />
+        // Avoid hard front band on forehead
+        <g>
+          <path d="M32 41 Q36 38 40 39" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" opacity={0.65} />
+          <path d="M68 41 Q64 38 60 39" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" opacity={0.65} />
+        </g>
       );
     case 'pixie':
       return (
@@ -589,9 +513,10 @@ function HairFront({ style, color, highlight }) {
       return null;
     default:
       return (
+        // No center band on default hairstyle
         <g>
-          <path d="M30 36 Q50 28 70 36 Q50 33 30 36 Z" fill={c} opacity={0.8} />
-          <path d="M32 34 Q50 26 68 34" fill="none" stroke={hi} strokeWidth="1.8" strokeLinecap="round" opacity={0.2} />
+          <path d="M33 40 Q37 37 41 38" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" opacity={0.58} />
+          <path d="M67 40 Q63 37 59 38" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" opacity={0.58} />
         </g>
       );
   }
@@ -853,7 +778,7 @@ function Clothes({ topStyle, topColor, bottomStyle, bottomColor, shoesColor, sho
 }
 
 // ── Accessoires ────────────────────────────────────────────────────────────
-function Accessory({ type, color }) {
+function Accessory({ type, color, uid = 'a', idSuffix = '' }) {
   const c = color || '#374151';
   switch (type) {
     case 'glasses': return (
@@ -968,6 +893,25 @@ function Accessory({ type, color }) {
         <path d="M22 48 Q50 42 78 48" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
       </g>
     );
+    case 'hijab': {
+      const mid = `hijab-${uid}${idSuffix}`;
+      return (
+        <g>
+          <defs>
+            <mask id={`${mid}-mask`}>
+              <rect width="100" height="100" fill="white" />
+              <ellipse cx="50" cy="47" rx="21" ry="24" fill="black" />
+            </mask>
+          </defs>
+          <path
+            d="M18 38 Q26 24 50 22 Q74 24 82 38 Q88 52 84 72 Q78 92 62 100 H38 Q22 92 16 72 Q12 52 18 38 Z"
+            fill={c}
+            mask={`url(#${mid}-mask)`}
+          />
+          <path d="M18 38 Q26 24 50 22 Q74 24 82 38" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.4" />
+        </g>
+      );
+    }
     default: return null;
   }
 }
@@ -977,13 +921,13 @@ function Neck({ sp }) {
   return (
     <g>
       {/* Shadow under chin */}
-      <ellipse cx="50" cy="70" rx="12" ry="4" fill={sp.shadow2} opacity={0.4} />
+      <ellipse cx="50" cy="69.4" rx="8.8" ry="2.3" fill={sp.shadow2} opacity={0.2} />
       {/* Neck */}
-      <rect x="43" y="68" width="14" height="12" rx="3" fill={sp.base} />
-      <rect x="45" y="68" width="3" height="12" fill="rgba(0,0,0,0.07)" />
-      <rect x="50" y="68" width="2" height="12" fill="rgba(0,0,0,0.04)" />
+      <rect x="46.1" y="70.2" width="7.8" height="7.1" rx="2.8" fill={sp.base} />
+      <rect x="47.1" y="70.2" width="1.1" height="7.1" fill="rgba(0,0,0,0.03)" />
+      <rect x="50.3" y="70.2" width="0.7" height="7.1" fill="rgba(0,0,0,0.02)" />
       {/* Clavicle hint */}
-      <path d="M38 80 Q50 84 62 80" fill="none" stroke={sp.shadow} strokeWidth="1" opacity={0.3} />
+      <path d="M42 78.7 Q50 80.1 58 78.7" fill="none" stroke={sp.shadow} strokeWidth="0.7" opacity={0.16} />
     </g>
   );
 }
@@ -995,6 +939,7 @@ export default function CharacterAvatar({ builder = {}, sizePx = 42, animated = 
   const sp = skinPalette(b.skin);
 
   const isHat = ['cap','beanie','headphones','crown'].includes(b.accessory);
+  const hasHijab = b.accessory === 'hijab' || b.accessory2 === 'hijab';
   const hasBg = b.bgStyle !== 'none';
 
   return (
@@ -1088,12 +1033,12 @@ export default function CharacterAvatar({ builder = {}, sizePx = 42, animated = 
         <Neck sp={sp} />
 
         {/* ── Hair (back layer) ── */}
-        <HairBack style={b.hairStyle} color={b.hairColor} highlight={b.hairHighlight} />
+        {!hasHijab && <HairBack style={b.hairStyle} color={b.hairColor} highlight={b.hairHighlight} />}
 
         {/* ── Face ── */}
         <FaceShape shape={b.faceShape} sp={sp} uid={uid} />
-        {/* Ambient occlusion on face */}
-        <ellipse cx="50" cy="50" rx="20" ry="23" fill={`url(#ao-${uid})`} />
+        {/* Ambient occlusion on face (very subtle for cleaner look) */}
+        <ellipse cx="50" cy="50" rx="20" ry="23" fill={`url(#ao-${uid})`} opacity={0.3} />
 
         {/* ── Ears ── */}
         <ellipse cx="29.5" cy="50" rx="4" ry="5.5" fill={sp.base} />
@@ -1108,16 +1053,16 @@ export default function CharacterAvatar({ builder = {}, sizePx = 42, animated = 
         <Brows expression={b.expression} browShape={b.browShape} hairColor={b.hairColor} uid={uid} />
 
         {/* ── Eyes ── */}
-        <Eye cx={39} cy={48} eyeColor={b.eyeColor} shape={b.eyeShape} size={b.eyeSize}
+        <Eye cx={39} cy={46.2} eyeColor={b.eyeColor} shape={b.eyeShape} size={b.eyeSize}
              lash={b.lashStyle} expression={b.expression} isLeft={true} uid={uid} />
-        <Eye cx={61} cy={48} eyeColor={b.eyeColor} shape={b.eyeShape} size={b.eyeSize}
+        <Eye cx={61} cy={46.2} eyeColor={b.eyeColor} shape={b.eyeShape} size={b.eyeSize}
              lash={b.lashStyle} expression={b.expression} isLeft={false} uid={uid} />
 
         {/* ── Cheeks ── */}
         {(b.blushIntensity || 0) > 0 && (
           <g>
-            <ellipse cx="32" cy="55" rx="8" ry="5" fill={b.blushColor || sp.blush} opacity={(b.blushIntensity||0.3)*0.7} />
-            <ellipse cx="68" cy="55" rx="8" ry="5" fill={b.blushColor || sp.blush} opacity={(b.blushIntensity||0.3)*0.7} />
+            <ellipse cx="34" cy="55.5" rx="5.2" ry="3.1" fill={b.blushColor || sp.blush} opacity={(b.blushIntensity || 0.2) * 0.28} />
+            <ellipse cx="66" cy="55.5" rx="5.2" ry="3.1" fill={b.blushColor || sp.blush} opacity={(b.blushIntensity || 0.2) * 0.28} />
           </g>
         )}
 
@@ -1131,18 +1076,18 @@ export default function CharacterAvatar({ builder = {}, sizePx = 42, animated = 
         <SkinDetails style={b.skinDetails} />
 
         {/* ── Hair (front layer) ── */}
-        <HairFront style={b.hairStyle} color={b.hairColor} highlight={b.hairHighlight} />
+        {!hasHijab && <HairFront style={b.hairStyle} color={b.hairColor} highlight={b.hairHighlight} />}
 
         {/* ── Accessory (non-hat first) ── */}
         {!isHat && b.accessory !== 'none' && (
-          <Accessory type={b.accessory} color={b.accessoryColor} />
+          <Accessory type={b.accessory} color={b.accessoryColor} uid={uid} idSuffix="" />
         )}
         {b.accessory2 && b.accessory2 !== 'none' && (
-          <Accessory type={b.accessory2} color={b.accessoryColor} />
+          <Accessory type={b.accessory2} color={b.accessoryColor} uid={uid} idSuffix="2" />
         )}
 
         {/* ── Hat accessories (on top) ── */}
-        {isHat && <Accessory type={b.accessory} color={b.accessoryColor} />}
+        {isHat && <Accessory type={b.accessory} color={b.accessoryColor} uid={uid} idSuffix="" />}
       </g>
     </svg>
   );

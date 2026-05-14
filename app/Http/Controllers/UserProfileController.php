@@ -16,11 +16,20 @@ class UserProfileController extends Controller
     {
         $auth = Auth::user();
         abort_if(! $auth, 403);
-        abort_if($auth->university_id !== $user->university_id, 404);
 
-        $posts = Post::where('user_id', $user->id)
-            ->where('university_id', $user->university_id)
-            ->with(['user', 'channel', 'comments.user'])
+        $isSuperAdminProfile = $user->role === 'super_admin';
+        if (! $isSuperAdminProfile && $auth->university_id !== $user->university_id) {
+            abort(404);
+        }
+
+        $postsQuery = Post::where('user_id', $user->id);
+        if ($isSuperAdminProfile) {
+            // super admin posts have university_id = null
+        } else {
+            $postsQuery->where('university_id', $user->university_id);
+        }
+        $posts = $postsQuery
+            ->with(['user', 'channel', 'comments' => fn ($q) => $q->whereNull('parent_id')->with(['user', 'replies.user'])])
             ->withCount(['likes', 'saves', 'comments'])
             ->latest()
             ->get();
@@ -46,23 +55,37 @@ class UserProfileController extends Controller
         PostLikersPreview::attach($posts);
 
         $isFollowing = $auth->following()->where('users.id', $user->id)->exists();
+        $followersList = $user->followers()
+            ->where('users.university_id', $user->university_id)
+            ->orderBy('users.name')
+            ->get(['users.id', 'users.name', 'users.avatar_path', 'users.avatar_builder']);
+        $followingList = $user->following()
+            ->where('users.university_id', $user->university_id)
+            ->orderBy('users.name')
+            ->get(['users.id', 'users.name', 'users.avatar_path', 'users.avatar_builder']);
 
         return Inertia::render('Profile/Public', [
             'profileUser' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'bio' => $user->bio,
                 'email' => $user->email,
                 'avatar_path' => $user->avatar_path,
                 'avatar_url' => $user->avatar_url,
                 'avatar_builder' => $user->avatar_builder,
-                'karma' => $user->karma,
+                'posts_count' => $posts->count(),
                 'campus_role' => $user->campus_role ?? 'student',
                 'role' => $user->role,
+                'followers_count' => $user->followers()->count(),
+                'following_count' => $user->following()->count(),
             ],
-            'university' => $user->university?->name ?? 'Université',
+            'university' => $user->university?->name ?? 'UniversitÃ©',
             'posts' => $posts,
             'isFollowing' => $isFollowing,
             'isSelf' => $auth->id === $user->id,
+            'followersList' => $followersList,
+            'followingList' => $followingList,
         ]);
     }
 }
+

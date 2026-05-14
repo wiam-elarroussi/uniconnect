@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Story extends Model
 {
-    protected $fillable = ['user_id', 'university_id', 'media_path', 'expires_at'];
+    protected $fillable = ['user_id', 'university_id', 'body', 'media_path', 'expires_at'];
 
     protected $casts = [
         'expires_at' => 'datetime',
@@ -24,8 +24,12 @@ class Story extends Model
         return $this->hasMany(StoryView::class);
     }
 
-    public function getMediaUrlAttribute(): string
+    public function getMediaUrlAttribute(): ?string
     {
-        return asset('storage/'.$this->media_path);
+        if (empty($this->media_path)) {
+            return null;
+        }
+
+        return '/storage/'.$this->media_path;
     }
 }

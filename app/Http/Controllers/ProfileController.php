@@ -32,15 +32,26 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $data = $request->safe()->only(['name', 'email']);
+        $data = $request->safe()->only(['name', 'bio', 'email']);
 
         $user->fill($data);
 
-        if ($request->filled('avatar_builder') && is_array($request->input('avatar_builder'))) {
-            $user->avatar_builder = $request->input('avatar_builder');
+        // Handle avatar_builder: may arrive as array (JSON) or string (FormData file upload)
+        if ($request->has('avatar_builder')) {
+            $ab = $request->input('avatar_builder');
+            if (is_string($ab)) {
+                $ab = json_decode($ab, true);
+            }
+            $user->avatar_builder = (is_array($ab) && count($ab) > 0) ? $ab : null;
         }
 
-        if ($request->hasFile('avatar')) {
+        // Handle photo deletion
+        if ($request->boolean('remove_avatar')) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+            $user->avatar_path = null;
+        } elseif ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
             if ($user->avatar_path) {
                 Storage::disk('public')->delete($user->avatar_path);

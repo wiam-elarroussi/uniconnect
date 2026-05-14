@@ -24,7 +24,7 @@ const Trigger = ({ children }) => {
             <div onClick={toggleOpen}>{children}</div>
             {open && (
                 <div
-                    className="fixed inset-0 z-40"
+                    className="fixed inset-0 z-[100]"
                     onClick={() => setOpen(false)}
                 />
             )}
@@ -63,7 +63,7 @@ const Content = ({
             leaveTo="opacity-0 scale-95"
         >
             <div
-                className={`absolute z-50 mt-2 ${alignClass} ${widthClass}`}
+                className={`absolute z-[110] mt-2 ${alignClass} ${widthClass}`}
                 onClick={() => setOpen(false)}
             >
                 <div className={[

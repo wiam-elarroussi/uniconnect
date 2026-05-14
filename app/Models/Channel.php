@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Channel extends Model
 {
@@ -12,6 +13,7 @@ class Channel extends Model
         'university_id',
         'created_by',
         'name',
+        'description',
         'slug',
         'avatar_path',
     ];
@@ -33,6 +35,11 @@ class Channel extends Model
         return $this->hasMany(Post::class);
     }
 
+    public function latestPost(): HasOne
+    {
+        return $this->hasOne(Post::class)->latestOfMany();
+    }
+
     public function followers()
     {
         return $this->belongsToMany(User::class, 'channel_follows')->withTimestamps();
@@ -40,6 +47,6 @@ class Channel extends Model
 
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->avatar_path ? asset('storage/'.$this->avatar_path) : null;
+        return $this->avatar_path ? '/storage/'.$this->avatar_path : null;
     }
 }

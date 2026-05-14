@@ -6,6 +6,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MyPostsController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SavedPostController;
 use App\Http\Controllers\StoryController;
+use App\Http\Controllers\SuggestionsController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Foundation\Application;
@@ -29,6 +31,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Modération
     Route::delete('/posts/{post}', [AdminController::class, 'deletePost'])->name('posts.delete');
+    Route::delete('/comments/{comment}', [AdminController::class, 'deleteComment'])->name('comments.delete');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
     Route::patch('/users/{user}/ban', [AdminController::class, 'toggleBanUser'])->name('users.ban');
     Route::patch('/users/{user}/campus-role', [AdminController::class, 'updateCampusRole'])->name('users.campus-role');
@@ -50,11 +53,20 @@ Route::middleware(['auth', 'verified', 'super_admin'])->prefix('super-admin')->n
     Route::delete('/admins/{user}', [SuperAdminController::class, 'destroyAdmin'])->name('admins.destroy');
 
     Route::post('/contact-messages/read-all', [SuperAdminController::class, 'markContactMessagesRead'])->name('contact.read-all');
+    Route::post('/contact-messages/{message}/reply', [SuperAdminController::class, 'replyContact'])->name('contact.reply');
 });
 
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:8,1')
     ->name('contact.store');
+
+Route::post('/contact/anonymous', [ContactController::class, 'storeAnonymous'])
+    ->middleware(['auth', 'verified', 'throttle:8,1'])
+    ->name('contact.anonymous');
+
+Route::post('/contact/open', [ContactController::class, 'storeOpen'])
+    ->middleware('throttle:8,1')
+    ->name('contact.open');
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -63,7 +75,7 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
-});
+})->name('welcome');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -91,7 +103,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('/stories', [StoryController::class, 'index'])->name('stories.index');
     Route::post('/stories', [StoryController::class, 'store'])->name('stories.store');
@@ -102,6 +117,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
     Route::post('/messages/groupes', [MessageController::class, 'storeGroup'])->name('messages.groups.store');
+    Route::delete('/messages/direct/{peer}', [MessageController::class, 'destroyDirect'])->name('messages.direct.destroy');
+    Route::delete('/messages/groupes/{conversation}', [MessageController::class, 'destroyGroup'])->name('messages.groups.destroy');
 
     Route::get('/saved-posts', [SavedPostController::class, 'index'])->name('saved-posts.index');
 
@@ -110,6 +127,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/canaux', [CampusChannelsController::class, 'index'])->name('channels.index');
     Route::get('/canaux/{channel}', [CampusChannelsController::class, 'show'])->name('channels.show');
     Route::post('/canaux/{channel}/follow', [CampusChannelsController::class, 'toggleFollow'])->name('channels.follow.toggle');
+
+    Route::get('/bibliotheque', [LibraryController::class, 'index'])->name('library.index');
+    Route::get('/suggestions', [SuggestionsController::class, 'index'])->name('suggestions.index');
 });
 
 Route::post('/resources', [App\Http\Controllers\ResourceController::class, 'store'])->middleware(['auth', 'verified'])->name('resources.store');

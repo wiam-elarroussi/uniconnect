@@ -19,6 +19,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'name',
+        'bio',
         'email',
         'password',
         'university_id',
@@ -126,7 +127,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->avatar_path ? asset('storage/'.$this->avatar_path) : null;
+        return $this->avatar_path ? '/storage/'.$this->avatar_path : null;
     }
 
     public function isAdmin(): bool

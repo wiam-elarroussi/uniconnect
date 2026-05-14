@@ -11,6 +11,68 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+const FEED_MAIN_SCROLL_KEY = 'uniconnect.feedMainScrollY';
+const FEED_MAIN_PATH_KEY = 'uniconnect.feedMainScrollPath';
+
+/**
+ * Le fil dashboard défile dans `#uni-feed-main-scroll`, pas dans `window`. Inertia mémorise
+ * `[scroll-region]`, mais une 2e passe après le rendu évite le retour en haut si le layout
+ * ou React n’ont pas encore rétabli le scroll.
+ */
+function registerFeedMainScrollRestore() {
+    if (typeof document === 'undefined' || typeof window === 'undefined') {
+        return;
+    }
+
+    document.addEventListener('inertia:before', () => {
+        const el = document.getElementById('uni-feed-main-scroll');
+        if (!el) {
+            sessionStorage.removeItem(FEED_MAIN_PATH_KEY);
+            sessionStorage.removeItem(FEED_MAIN_SCROLL_KEY);
+            return;
+        }
+        const path = window.location.pathname + window.location.search;
+        sessionStorage.setItem(FEED_MAIN_PATH_KEY, path);
+        sessionStorage.setItem(FEED_MAIN_SCROLL_KEY, String(el.scrollTop));
+    });
+
+    document.addEventListener('inertia:finish', (event) => {
+        const d = event.detail;
+        if (d?.cancelled || d?.interrupted) {
+            return;
+        }
+        const pathSaved = sessionStorage.getItem(FEED_MAIN_PATH_KEY);
+        const yStr = sessionStorage.getItem(FEED_MAIN_SCROLL_KEY);
+        if (pathSaved == null || yStr == null) {
+            return;
+        }
+        const now = window.location.pathname + window.location.search;
+        if (pathSaved !== now) {
+            sessionStorage.removeItem(FEED_MAIN_PATH_KEY);
+            sessionStorage.removeItem(FEED_MAIN_SCROLL_KEY);
+            return;
+        }
+        const top = parseInt(yStr, 10);
+        if (!Number.isFinite(top) || top < 0) {
+            return;
+        }
+        const run = () => {
+            const el = document.getElementById('uni-feed-main-scroll');
+            if (el) {
+                el.scrollTop = top;
+            }
+        };
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                run();
+                setTimeout(run, 0);
+            });
+        });
+    });
+}
+
+registerFeedMainScrollRestore();
+
 function syncCsrfMetaFromPage(page) {
     const token = page?.props?.csrf_token;
     if (typeof token !== 'string' || !token) {

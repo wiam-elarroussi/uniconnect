@@ -57,8 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 || ($request->hasHeader('X-Inertia') && $e instanceof ValidationException);
         });
 
-        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
-            if ($request->expectsJson()) {
+        $exceptions->render(function (NotFoundHttpException $_, Request $request) {
+            if ($request->expectsJson() || $request->hasHeader('X-Inertia')) {
                 return null;
             }
 

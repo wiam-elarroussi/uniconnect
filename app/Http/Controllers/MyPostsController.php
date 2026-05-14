@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Channel;
 use App\Models\Post;
+use App\Models\UserNotification;
 use App\Support\PostLikersPreview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class MyPostsController extends Controller
 
         $posts = Post::where('user_id', $user->id)
             ->where('university_id', $universityId)
-            ->with(['user', 'channel', 'comments.user'])
+            ->with(['user', 'channel', 'comments' => fn ($q) => $q->whereNull('parent_id')->with(['user', 'replies.user'])])
             ->withCount(['likes', 'saves', 'comments'])
             ->latest()
             ->get();
@@ -52,10 +53,14 @@ class MyPostsController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'slug', 'avatar_path']);
 
+        UserNotification::pruneReadForUser($user->id);
+
         return Inertia::render('MyPosts/Index', [
-            'university' => $user->university ? $user->university->name : 'Étudiant',
+            'university' => $user->university ? $user->university->name : 'Ã‰tudiant',
             'posts' => $posts,
             'channels' => $channels,
+            'notifications' => [],
         ]);
     }
 }
+

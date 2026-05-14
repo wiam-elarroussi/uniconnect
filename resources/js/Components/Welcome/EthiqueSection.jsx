@@ -9,7 +9,7 @@ export function EthiqueSection() {
   const pillars = t('welcomePage.ethics.pillars', { returnObjects: true }) || [];
 
   return (
-    <section id="ethique" className="relative z-10 py-16 sm:py-24 px-4 sm:px-6 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
+    <section id="ethique" className="relative z-10 scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24 md:scroll-mt-28 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
       {/* Glow central */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
@@ -76,34 +76,32 @@ export function MethodologieSection() {
   const steps = t('welcomePage.steps', { returnObjects: true }) || [];
 
   return (
-    <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <span className="inline-block text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full mb-4">
+    <section id="methodologie" className="relative z-10 scroll-mt-24 px-4 py-16 sm:px-6 sm:py-24 md:scroll-mt-28">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-14 text-center">
+          <span className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-200">
             {t('welcomePage.methodology.sectionBadge')}
           </span>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
+          <h2 className="mb-4 text-4xl font-black leading-tight text-slate-900 dark:text-slate-100 md:text-5xl">
             {t('welcomePage.methodology.title')} <span className="gradient-text">{t('welcomePage.methodology.titleHighlight')}</span>
           </h2>
         </div>
 
         <div className="relative">
-          {/* Ligne verticale */}
-          <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-indigo-200 to-transparent md:-translate-x-0.5" />
+          <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-indigo-200 to-transparent md:left-1/2 md:-translate-x-0.5 dark:from-slate-600 dark:via-slate-600" />
 
           {Array.isArray(steps) && steps.map(({ step, title, desc, side }) => (
             <div key={step}
-              className={`relative flex items-start gap-4 mb-10 md:mb-8 pl-14 md:pl-0 ${
+              className={`relative mb-10 flex items-start gap-4 pl-14 md:mb-8 md:pl-0 ${
                 side === 'right' ? 'md:flex-row-reverse md:text-right' : 'md:flex-row md:text-left'
               }`}>
-              {/* Nœud */}
-              <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 w-12 h-12 rounded-xl bg-white border-2 border-blue-200 shadow-sm flex items-center justify-center z-10">
-                <span className="text-xs font-black text-blue-600">{step}</span>
+              <div className="absolute left-0 z-10 flex h-12 w-12 items-center justify-center rounded-xl border-2 border-blue-200 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-800 md:left-1/2 md:-translate-x-1/2">
+                <span className="text-xs font-black text-blue-600 dark:text-sky-400">{step}</span>
               </div>
 
-              <div className={`md:w-[calc(50%-3rem)] ${side === 'right' ? 'md:ml-auto md:pl-6' : 'md:mr-auto md:pr-6'} bg-white rounded-2xl border border-gray-100 shadow-sm p-5`}>
-                <h3 className="font-bold text-slate-900 mb-1">{title}</h3>
-                <p className="text-slate-500 text-sm">{desc}</p>
+              <div className={`md:w-[calc(50%-3rem)] ${side === 'right' ? 'md:ml-auto md:pl-6' : 'md:mr-auto md:pr-6'} rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/60`}>
+                <h3 className="mb-1 font-bold text-slate-900 dark:text-slate-100">{title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{desc}</p>
               </div>
             </div>
           ))}

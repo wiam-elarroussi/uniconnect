@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactReplyMail;
 use App\Models\ContactMessage;
 use App\Models\University;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -26,7 +28,10 @@ class SuperAdminController extends Controller
                 ->whereIn('role', ['admin', 'super_admin'])
                 ->orderByDesc('created_at')
                 ->get(['id', 'name', 'email', 'role', 'university_id', 'created_at']),
-            'contactMessages' => ContactMessage::orderByDesc('created_at')->limit(50)->get(),
+            'contactMessages' => ContactMessage::with('user:id,name,email')
+                ->orderByDesc('created_at')
+                ->limit(50)
+                ->get(),
             'unreadContactCount' => ContactMessage::whereNull('read_at')->count(),
         ]);
     }
@@ -191,7 +196,7 @@ class SuperAdminController extends Controller
             'name' => $data['name'],
             'email' => strtolower($data['email']),
             'role' => $data['role'],
-            'university_id' => $data['role'] === 'admin' ? $data['university_id'] : null,
+            'university_id' => $data['role'] === 'admin' ? ($data['university_id'] ?: null) : null,
         ]);
 
         return back()->with('success', 'Administrateur mis à jour.');
@@ -204,5 +209,33 @@ class SuperAdminController extends Controller
         $user->delete();
 
         return back()->with('success', 'Administrateur supprimé.');
+    }
+
+    public function replyContact(Request $request, ContactMessage $message)
+    {
+        $data = $request->validate([
+            'reply' => ['required', 'string', 'min:5', 'max:5000'],
+        ]);
+
+        $recipientEmail = $message->is_anonymous
+            ? ($message->user?->email)
+            : $message->email;
+
+        $recipientName = $message->is_anonymous
+            ? ($message->user?->name ?? 'Utilisateur')
+            : ($message->name ?? 'Utilisateur');
+
+        if (! $recipientEmail) {
+            return response()->json(['error' => 'Aucune adresse email disponible pour ce message.'], 422);
+        }
+
+        if (! $message->read_at) {
+            $message->update(['read_at' => now()]);
+        }
+
+        Mail::to($recipientEmail, $recipientName)
+            ->send(new ContactReplyMail($recipientName, $data['reply'], $message->body));
+
+        return response()->json(['ok' => true]);
     }
 }

@@ -13,6 +13,11 @@ class ValidDisplayName implements ValidationRule
             return;
         }
 
+        $user = auth()->user();
+        if ($user && $user->name === $value) {
+            return;
+        }
+
         $lower = mb_strtolower($value, 'UTF-8');
 
         $forbidden = [

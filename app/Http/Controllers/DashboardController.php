@@ -30,9 +30,12 @@ class DashboardController extends Controller
 
         $followingIds = $user->following()->pluck('users.id')->all();
 
-        $postsQuery = Post::where('university_id', $universityId)
+        $postsQuery = Post::where(function ($q) use ($universityId) {
+                $q->where('university_id', $universityId)
+                  ->orWhereHas('user', fn ($q2) => $q2->where('role', 'super_admin'));
+            })
             ->where('user_id', '!=', $user->id)
-            ->with(['user', 'channel', 'comments.user'])
+            ->with(['user', 'channel', 'comments' => fn ($q) => $q->whereNull('parent_id')->with(['user', 'replies.user'])])
             ->withCount(['likes', 'saves', 'comments']);
 
         if ($feedMode === 'following') {
@@ -73,16 +76,6 @@ class DashboardController extends Controller
 
         UserNotification::pruneReadForUser($user->id);
 
-        $unreadNotificationsCount = UserNotification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->count();
-
-        $notifications = UserNotification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->orderByDesc('created_at')
-            ->limit(30)
-            ->get(['id', 'type', 'title', 'body', 'created_at']);
-
         $since = now()->subDays(14);
         $tagCounts = [];
         Post::where('university_id', $universityId)
@@ -114,18 +107,24 @@ class DashboardController extends Controller
             ->get(['id', 'name', 'avatar_path', 'avatar_builder']);
 
         $suggestionQuery = User::query()
-            ->where('university_id', $universityId)
+            ->where(function ($q) use ($universityId) {
+                $q->where('university_id', $universityId)
+                  ->orWhere('role', 'super_admin');
+            })
             ->where('id', '!=', $user->id)
             ->whereNotIn('id', $followingIds);
 
         $followSuggestions = $suggestionQuery
             ->orderByDesc('last_seen_at')
             ->limit(8)
-            ->get(['id', 'name', 'avatar_path', 'avatar_builder']);
+            ->get(['id', 'name', 'avatar_path', 'avatar_builder', 'role', 'campus_role']);
 
         $storiesQuery = Story::with('user:id,name,avatar_path,avatar_builder')
             ->withCount('views')
-            ->where('university_id', $universityId)
+            ->where(function ($q) use ($universityId) {
+                $q->where('university_id', $universityId)
+                  ->orWhereHas('user', fn ($q2) => $q2->where('role', 'super_admin'));
+            })
             ->where('expires_at', '>', now());
 
         if ($feedMode === 'following') {
@@ -149,8 +148,7 @@ class DashboardController extends Controller
             'posts' => $posts,
             'resources' => Resource::where('university_id', $universityId)->with('user')->latest()->get(),
             'stories' => $stories,
-            'notifications' => $notifications,
-            'unreadNotificationsCount' => $unreadNotificationsCount,
+            'notifications' => [],
             'feedMode' => $feedMode,
             'channelFeed' => $channelFeed,
             'followedChannelIds' => array_map('intval', $followedChannelIds),

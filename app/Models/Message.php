@@ -16,7 +16,7 @@ class Message extends Model
             return null;
         }
 
-        return asset('storage/'.$this->media_path);
+        return '/storage/'.$this->media_path;
     }
 
     protected function casts(): array

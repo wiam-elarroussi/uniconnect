@@ -1,5 +1,7 @@
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import FeedNavFrame from '@/Components/Layout/FeedNavFrame';
+import NavGlyph from '@/Components/Nav/NavGlyph';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -9,73 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 const NAV_COMPACT_STORAGE = 'uniconnect.nav.compact';
 
-function NavGlyph({ name, className = 'w-5 h-5' }) {
-    const c = className;
-    switch (name) {
-        case 'home':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-            );
-        case 'channels':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                </svg>
-            );
-        case 'posts':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                </svg>
-            );
-        case 'shield':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-            );
-        case 'chat':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-            );
-        case 'stories':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <circle cx="12" cy="12" r="3" />
-                    <circle cx="12" cy="12" r="8" strokeDasharray="3 2" />
-                </svg>
-            );
-        case 'bookmark':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-            );
-        case 'super':
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-            );
-        default:
-            return (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={c}>
-                    <circle cx="12" cy="12" r="10" />
-                </svg>
-            );
-    }
-}
-
-export default function AuthenticatedLayout({ header, children }) {
+export default function AuthenticatedLayout({ header, children, layoutVariant = 'default' }) {
     const { t } = useTranslation();
     const user = usePage().props.auth.user;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
@@ -86,6 +22,12 @@ export default function AuthenticatedLayout({ header, children }) {
         if (typeof window === 'undefined') return 'dark';
         return window.localStorage.getItem(MOOD_STORAGE_KEY) || 'dark';
     });
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        window.localStorage.setItem(MOOD_STORAGE_KEY, moodId);
+        window.dispatchEvent(new CustomEvent('uniconnect:mood-change', { detail: { moodId } }));
+    }, [moodId]);
 
     const [navCompact, setNavCompact] = useState(() => {
         if (typeof window === 'undefined') return true;
@@ -115,7 +57,7 @@ export default function AuthenticatedLayout({ header, children }) {
     }, []);
 
     const currentHour = new Date().getHours();
-    const isFocusMode = currentHour >= 22 || currentHour < 7;
+    const isFocusMode = currentHour >= 23 || currentHour < 7;
     const firstName = String(user?.name ?? '')
         .trim()
         .split(/\s+/)
@@ -166,6 +108,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 '--border': 'rgba(2,6,23,0.10)',
                 '--border-glow': 'rgba(37,99,235,0.18)',
                 '--nav-blur-bg': 'rgba(248,250,252,0.88)',
+                '--panel-bg': 'rgba(255,255,255,0.97)',
+                '--bg-card': 'rgba(248,250,252,0.95)',
               }
             : {
                 '--text-1': '#f0f4ff',
@@ -174,6 +118,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 '--border': 'rgba(255,255,255,0.07)',
                 '--border-glow': 'rgba(99,179,237,0.30)',
                 '--nav-blur-bg': 'rgba(11,20,51,0.70)',
+                '--panel-bg': 'rgba(11,20,51,0.88)',
+                '--bg-card': 'rgba(7, 12, 32, 0.72)',
               };
 
     const isLight = moodId === 'light';
@@ -182,7 +128,11 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div
-            className="min-h-screen flex flex-col"
+            className={
+                layoutVariant === 'feed'
+                    ? `${moodId === 'dark' ? 'dark ' : ''}flex h-dvh min-h-0 flex-col overflow-hidden`
+                    : `${moodId === 'dark' ? 'dark ' : ''}min-h-screen flex flex-col`
+            }
             style={{
                 ...layoutVars,
                 background: moodId === 'light' ? 'rgb(248,250,252)' : 'rgb(3,4,10)',
@@ -233,6 +183,12 @@ export default function AuthenticatedLayout({ header, children }) {
                 }
             `}</style>
 
+            {layoutVariant === 'feed' ? (
+                <FeedNavFrame moodId={moodId} setMoodId={setMoodId} isLight={isLight}>
+                    {children}
+                </FeedNavFrame>
+            ) : (
+            <>
             {/* ══════════════════════════════════════════════════════════════ */}
             {/* NAVBAR                                                          */}
             {/* ══════════════════════════════════════════════════════════════ */}
@@ -447,7 +403,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         {/* ── Burger mobile ── */}
                         <button
                             onClick={() => setShowingNavigationDropdown(v => !v)}
-                            className={`sm:hidden w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
+                            className={`sm:hidden w-11 h-11 flex items-center justify-center rounded-xl border transition-all ${
                                 isLight
                                     ? 'border-gray-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600'
                                     : 'border-white/10 bg-slate-900/40 text-slate-300 hover:border-blue-400/40 hover:text-blue-300'
@@ -635,6 +591,8 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </div>
             </footer>
+            </>
+            )}
         </div>
     );
 }
